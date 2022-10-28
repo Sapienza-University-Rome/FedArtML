@@ -18,4 +18,4 @@ deploy:
   username: "Travis deployment"
   password: "pypi-AgEIcHlwaS5vcmcCJGU3N2JlMTQyLTgzMDUtNGZlNC1hMjI2LTM3YmQ4ZTYwY2IwNAACEFsxLFsiZmVkYXJ0bWwiXV0AAixbMixbIjMyMTFkMDRiLTMxYjItNGU0Ny05MWFjLTMyZmQzN2U5MDYzMyJdXQAABiBjcx-PbWaqvH3fmnvg-qWfLWo3EdJKyh5DcYx_fPk12g"
   on:
-    branch: main
+    branch: master
