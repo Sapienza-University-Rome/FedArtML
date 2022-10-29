@@ -25,3 +25,7 @@ my_plot = InteractivePlots(labels=my_labels)
 # Show stacked bar distribution plot
 my_plot.show_stacked_distr()
 ```
+
+### Documentation
+Find the documentation of the library on:
+https://fedartml.readthedocs.io/en/latest/
