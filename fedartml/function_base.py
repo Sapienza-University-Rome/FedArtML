@@ -1,6 +1,6 @@
 import numpy as np
 import math
-
+import pandas as pd
 
 def normalize_value(value, min_val=0, max_val=1):
     """
@@ -143,3 +143,20 @@ def get_spaced_colors(n):
     interval = int(max_value / n)
     colors = ["#" + str(hex(i)[2:].zfill(6)) for i in range(0, max_value, interval)]
     return colors
+
+
+def get_stratified_data(df, strat_var, strat_classes, strat_counts, random_state):
+
+  df_strat = []
+
+  for i in range(len(strat_classes)):
+    if int(strat_counts[i]) == 0:
+      df_filt = df[df[strat_var] == strat_classes[i]].sample(replace=True, n=1, random_state=random_state)
+    else:
+      df_filt = df[df[strat_var] == strat_classes[i]].sample(replace=True, n=int(strat_counts[i]), random_state=random_state)
+
+    df_strat.append(df_filt)
+
+  df_strat = pd.concat(df_strat, axis=0)
+
+  return(df_strat)
