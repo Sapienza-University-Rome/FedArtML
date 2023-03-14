@@ -18,19 +18,19 @@ class FedArtMLTestCase(unittest.TestCase):
         """Test stacked bar distribution plot """
 
         # Show plot
-        self.my_plot.show_stacked_distr()
+        self.my_plot.show_stacked_distr_dirichlet()
 
     def test_show_scatter_distr(self):
         """Test stacked bar distribution plot """
 
         # Show plot
-        self.my_plot.show_scatter_distr()
+        self.my_plot.show_scatter_distr_dirichlet()
 
     def test_show_bar_divided_distr(self):
         """Test stacked bar distribution plot """
 
         # Show plot
-        self.my_plot.show_bar_divided_distr()
+        self.my_plot.show_bar_divided_distr_dirichlet()
 
 
 if __name__ == '__main__':

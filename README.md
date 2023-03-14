@@ -23,7 +23,7 @@ my_labels = train_y
 my_plot = InteractivePlots(labels=my_labels)
 
 # Show stacked bar distribution plot
-my_plot.show_stacked_distr()
+my_plot.show_stacked_distr_dirichlet()
 ```
 
 ### Documentation

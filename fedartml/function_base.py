@@ -1,6 +1,7 @@
 import numpy as np
 import math
 import pandas as pd
+from scipy.stats import wasserstein_distance
 
 def normalize_value(value, min_val=0, max_val=1):
     """
@@ -36,7 +37,7 @@ def normalize_value(value, min_val=0, max_val=1):
     return val_norm
 
 
-def jsd(prob_dists):
+def jensen_shannon_distance(prob_dists):
     """
     Calculate the Jensen-Shannon distance for multiple probability distributions.
 
@@ -74,7 +75,7 @@ def jsd(prob_dists):
 
     if len(prob_dists) > 2:
         jsd_val = normalize_value(jsd_val, min_val=0, max_val=math.log2(len(prob_dists)))
-    return jsd_val
+    return min(np.sqrt(jsd_val),1.0)
 
 
 #
@@ -160,3 +161,26 @@ def get_stratified_data(df, strat_var, strat_classes, strat_counts, random_state
   df_strat = pd.concat(df_strat, axis=0)
 
   return(df_strat)
+
+def hellinger_distance(distributions):
+    n = len(distributions)
+    m = len(distributions[0])
+    sqrt_d = np.sqrt(distributions)
+    h = np.sum((sqrt_d[:, np.newaxis, :] - sqrt_d[np.newaxis, :, :]) ** 2, axis=2)
+    return np.sqrt(np.sum(h) / (2 * n * (n - 1)))
+
+
+def earth_movers_distance(D):
+    D = np.array(D)
+    # Calculate pairwise distances between distributions using EMD
+    n = D.shape[0]
+    emd_distances = np.zeros((n, n))
+    for i, j in zip(*np.triu_indices(n, k=1)):
+        emd_distances[i, j] = wasserstein_distance(D[i], D[j])
+    emd_distances += emd_distances.T
+    np.fill_diagonal(emd_distances, 0)
+
+    # Calculate the average pairwise distance
+    avg_distance = np.mean(emd_distances[np.triu_indices(n, k=1)])
+
+    return (avg_distance)

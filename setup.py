@@ -15,13 +15,13 @@ with open(path.join(HERE, 'README.md'), encoding='utf-8') as f:
 # This call to setup() does all the work
 setup(
     name="FedArtML",
-    version="0.1.4",
+    version="0.1.5",
     description="Federated learning for Artificial Intelligence and Machine Learning library ",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="",
     author="Daniel Mauricio Jimenez Gutierrez",
-    author_email="jimenezgutierrez.1939216@studenti.uniroma1.it",
+    author_email="jimenezgutierrez@diag.uniroma1.it",
     license="MIT",
     classifiers=[
         "Intended Audience :: Developers",
