@@ -56,6 +56,8 @@ clients_glob_dic, list_ids_sampled_dic, miss_class_per_node, distances = my_fede
                                                              num_clients = 2, prefix_cli='Local_node', method = "percent_noniid", percent_noniid = 2)
 ```
 
+You can also check broader guides to use this tool on the [examples](https://github.com/Sapienza-University-Rome/FedArtML/tree/master/examples) folder.
+
 ### Documentation
 Find the documentation of the library on:
 https://fedartml.readthedocs.io/en/latest/
