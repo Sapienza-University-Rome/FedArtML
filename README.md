@@ -53,11 +53,11 @@ my_federater = SplitAsFederatedData(random_state = random_state)
 
 # Get federated dataset from centralized dataset
 clients_glob_dic, list_ids_sampled_dic, miss_class_per_node, distances = my_federater.create_clients(image_list = x_train_glob, label_list = y_train_glob, 
-                                                             num_clients = 2, prefix_cli='Local_node', method = "percent_noniid", percent_noniid = 2)
+                                                             num_clients = 2, prefix_cli='Local_node', method = "percent_noniid", percent_noniid = 50)
 ```
 
 You can also check broader guides to use this tool on the [examples](https://github.com/Sapienza-University-Rome/FedArtML/tree/master/examples) folder.
 
 ### Documentation
 Find the documentation of the library on:
-https://fedartml.readthedocs.io/en/latest/
+https://fedartml.readthedocs.io/en/latest/index.html#
