@@ -15,20 +15,20 @@ class InteractivePlots:
     Generate simulated interactive plots (with sliders) from the labels provided in a federated learning paradigm to
     exemplify identically and non-identically distributed labels across the local nodes (clients).
 
-        Parameters
-        ----------
-        labels : array-like
-            The target values (class labels in classification).
-        random_state : int
-            Controls the shuffling applied to the generation of pseudorandom numbers. Pass an int for reproducible
-            output across multiple function calls.
-        colors : list
-            Colors list used to plot. Must have a length of 7 positions.
-        distance : str
-            Distance to use for measuring heterogeneity (non-IID-ness) of the label's distribution among clients.
-            Possible choices: "jensen-shannon", "hellinger", "earth_movers".
-        **plot_kwargs : dict
-            Keyword arguments used for customizing plots (inherited from matplotlib.pyplot).
+    Parameters
+    ----------
+    labels : array-like
+        The target values (class labels in classification).
+    random_state : int
+        Controls the shuffling applied to the generation of pseudorandom numbers. Pass an int for reproducible
+        output across multiple function calls.
+    colors : list
+        Colors list used to plot. Must have a length of 7 positions.
+    distance : str
+        Distance to use for measuring heterogeneity (non-IID-ness) of the label's distribution among clients.
+        Possible choices: "jensen-shannon", "hellinger", "earth_movers".
+    **plot_kwargs : dict
+        Keyword arguments used for customizing plots (inherited from matplotlib.pyplot).
     """
 
     def __init__(self, labels, random_state=None, colors=None, distance="jensen-shannon", **plot_kwargs):
@@ -45,28 +45,16 @@ class InteractivePlots:
         """
         Create an interactive stacked bar plot (with sliders) per each local node (client) and label's classes.
 
-            Parameters
-            ----------
-            Alpha : slider
-                Concentration parameter of the Dirichlet distribution.
-            Local_Nodes : slider
-                Number of local nodes (clients) used in the federated learning paradigm.
+        Parameters
+        ----------
+        Alpha : slider
+            Concentration parameter of the Dirichlet distribution.
+        Local_Nodes : slider
+            Number of local nodes (clients) used in the federated learning paradigm.
 
-            Raises
-            ------
-
-            Returns
-            -------
-            The return keyword is empty. The function shows the plot as output.
-
-            See Also
-            --------
-
-            References
-            ----------
-
-            Examples
-            --------
+        Returns
+        -------
+        The return keyword is empty. The function shows the plot as output.
         """
         labels_encoded = self.labels
 
@@ -123,33 +111,27 @@ class InteractivePlots:
         """
         Show an interactive stacked bar plot (with sliders) per each local node (client) and label's classes.
 
-            Parameters
-            ----------
-            **slider_kwargs: dict
-                Keyword arguments used for customizing sliders (inherited from ipywidgets.interact).
+        Parameters
+        ----------
+        **slider_kwargs: dict
+            Keyword arguments used for customizing sliders (inherited from ipywidgets.interact).
 
-            Raises
-            ------
+        Returns
+        -------
+        The return keyword is empty. The function shows the sliders for Alpha and number of local nodes (clients).
 
-            Returns
-            -------
-            The return keyword is empty. The function shows the sliders for Alpha and number of local nodes (clients).
+        References
+        ----------
+        .. [1] Tao Lin∗, Lingjing Kong∗, Sebastian U. Stich, Martin Jaggi. (2020). Ensemble Distillation for Robust Model Fusion in Federated Learning
+               https://proceedings.neurips.cc/paper/2020/file/18df51b97ccd68128e994804f3eccc87-Supplemental.pdf
 
-            See Also
-            --------
-
-            References
-            ----------
-            .. [1] Tao Lin∗, Lingjing Kong∗, Sebastian U. Stich, Martin Jaggi. (2020). Ensemble Distillation for Robust Model Fusion in Federated Learning
-                   https://proceedings.neurips.cc/paper/2020/file/18df51b97ccd68128e994804f3eccc87-Supplemental.pdf
-
-            Examples
-            --------
-            >>> from fedartml import InteractivePlots
-            >>> from keras.datasets import mnist
-            >>> (train_X, train_y), (test_X, test_y) = mnist.load_data()
-            >>> my_plot = InteractivePlots(labels = train_y)
-            >>> my_plot.show_stacked_distr_dirichlet()
+        Examples
+        --------
+        >>> from fedartml import InteractivePlots
+        >>> from keras.datasets import mnist
+        >>> (train_X, train_y), (test_X, test_y) = mnist.load_data()
+        >>> my_plot = InteractivePlots(labels = train_y)
+        >>> my_plot.show_stacked_distr_dirichlet()
         """
         interact(self.stacked_distr_dirichlet,
                  Alpha=FloatLogSlider(**slider_kwargs.get('alpha_slider_kwargs',
@@ -166,28 +148,16 @@ class InteractivePlots:
         """
         Create an interactive scatter plot (with sliders) per each local node (client) and label's classes.
 
-            Parameters
-            ----------
-            Alpha : slider
-                Concentration parameter of the Dirichlet distribution.
-            Local_Nodes : slider
-                Number of local nodes (clients) used in the federated learning paradigm.
+        Parameters
+        ----------
+        Alpha : slider
+            Concentration parameter of the Dirichlet distribution.
+        Local_Nodes : slider
+            Number of local nodes (clients) used in the federated learning paradigm.
 
-            Raises
-            ------
-
-            Returns
-            -------
-            The return keyword is empty. The function shows the plot as output.
-
-            See Also
-            --------
-
-            References
-            ----------
-
-            Examples
-            --------
+        Returns
+        -------
+        The return keyword is empty. The function shows the plot as output.
         """
         labels_encoded = self.labels
 
@@ -249,33 +219,27 @@ class InteractivePlots:
         """
         Show an interactive scatter plot (with sliders) per each local node (client) and label's classes.
 
-            Parameters
-            ----------
-            **slider_kwargs: dict
-                Keyword arguments used for customizing sliders (inherited from ipywidgets.interact).
+        Parameters
+        ----------
+        **slider_kwargs: dict
+            Keyword arguments used for customizing sliders (inherited from ipywidgets.interact).
 
-            Raises
-            ------
+        Returns
+        -------
+        The return keyword is empty. The function shows the sliders for Alpha and number of local nodes (clients).
 
-            Returns
-            -------
-            The return keyword is empty. The function shows the sliders for Alpha and number of local nodes (clients).
+        References
+        ----------
+        .. [1] Tao Lin∗, Lingjing Kong∗, Sebastian U. Stich, Martin Jaggi. (2020). Ensemble Distillation for Robust Model Fusion in Federated Learning
+               https://proceedings.neurips.cc/paper/2020/file/18df51b97ccd68128e994804f3eccc87-Supplemental.pdf
 
-            See Also
-            --------
-
-            References
-            ----------
-            .. [1] Tao Lin∗, Lingjing Kong∗, Sebastian U. Stich, Martin Jaggi. (2020). Ensemble Distillation for Robust Model Fusion in Federated Learning
-                   https://proceedings.neurips.cc/paper/2020/file/18df51b97ccd68128e994804f3eccc87-Supplemental.pdf
-
-            Examples
-            --------
-            >>> from fedartml import InteractivePlots
-            >>> from keras.datasets import mnist
-            >>> (train_X, train_y), (test_X, test_y) = mnist.load_data()
-            >>> my_plot = InteractivePlots(labels = train_y)
-            >>> my_plot.show_scatter_distr_dirichlet()
+        Examples
+        --------
+        >>> from fedartml import InteractivePlots
+        >>> from keras.datasets import mnist
+        >>> (train_X, train_y), (test_X, test_y) = mnist.load_data()
+        >>> my_plot = InteractivePlots(labels = train_y)
+        >>> my_plot.show_scatter_distr_dirichlet()
         """
         interact(self.scatter_distr_dirichlet,
                  Alpha=FloatLogSlider(**slider_kwargs.get('alpha_slider_kwargs',
@@ -292,28 +256,16 @@ class InteractivePlots:
         """
         Create an interactive bar plot (with sliders) divided per each local node (client).
 
-            Parameters
-            ----------
-            Alpha : slider
-                Concentration parameter of the Dirichlet distribution.
-            Local_Nodes : slider
-                Number of local nodes (clients) used in the federated learning paradigm.
+        Parameters
+        ----------
+        Alpha : slider
+            Concentration parameter of the Dirichlet distribution.
+        Local_Nodes : slider
+            Number of local nodes (clients) used in the federated learning paradigm.
 
-            Raises
-            ------
-
-            Returns
-            -------
-            The return keyword is empty. The function shows the plot as output.
-
-            See Also
-            --------
-
-            References
-            ----------
-
-            Examples
-            --------
+        Returns
+        -------
+        The return keyword is empty. The function shows the plot as output.
         """
         labels_encoded = self.labels
 
@@ -391,33 +343,27 @@ class InteractivePlots:
         """
         Show an interactive bar plot (with sliders) divided per each local node (client).
 
-            Parameters
-            ----------
-            **slider_kwargs: dict
-                Keyword arguments used for customizing sliders (inherited from ipywidgets.interact).
+        Parameters
+        ----------
+        **slider_kwargs: dict
+            Keyword arguments used for customizing sliders (inherited from ipywidgets.interact).
 
-            Raises
-            ------
+        Returns
+        -------
+        The return keyword is empty. The function shows the sliders for Alpha and number of local nodes (clients).
 
-            Returns
-            -------
-            The return keyword is empty. The function shows the sliders for Alpha and number of local nodes (clients).
+        References
+        ----------
+        .. [1] Tao Lin∗, Lingjing Kong∗, Sebastian U. Stich, Martin Jaggi. (2020). Ensemble Distillation for Robust Model Fusion in Federated Learning
+               https://proceedings.neurips.cc/paper/2020/file/18df51b97ccd68128e994804f3eccc87-Supplemental.pdf
 
-            See Also
-            --------
-
-            References
-            ----------
-            .. [1] Tao Lin∗, Lingjing Kong∗, Sebastian U. Stich, Martin Jaggi. (2020). Ensemble Distillation for Robust Model Fusion in Federated Learning
-                   https://proceedings.neurips.cc/paper/2020/file/18df51b97ccd68128e994804f3eccc87-Supplemental.pdf
-
-            Examples
-            --------
-            >>> from fedartml import InteractivePlots
-            >>> from keras.datasets import mnist
-            >>> (train_X, train_y), (test_X, test_y) = mnist.load_data()
-            >>> my_plot = InteractivePlots(labels = train_y)
-            >>> my_plot.show_bar_divided_distr_dirichlet()
+        Examples
+        --------
+        >>> from fedartml import InteractivePlots
+        >>> from keras.datasets import mnist
+        >>> (train_X, train_y), (test_X, test_y) = mnist.load_data()
+        >>> my_plot = InteractivePlots(labels = train_y)
+        >>> my_plot.show_bar_divided_distr_dirichlet()
         """
         interact(self.bar_divided_distr_dirichlet,
                  Alpha=FloatLogSlider(**slider_kwargs.get('alpha_slider_kwargs',
@@ -434,28 +380,16 @@ class InteractivePlots:
         """
         Create an interactive stacked bar plot (with sliders) per each local node (client) and label's classes.
 
-            Parameters
-            ----------
-            Pctg_NonIID : slider
-                Percentage (between o and 100) desired of non-IID-ness for the federated data.
-            Local_Nodes : slider
-                Number of local nodes (clients) used in the federated learning paradigm.
+        Parameters
+        ----------
+        Pctg_NonIID : slider
+            Percentage (between o and 100) desired of non-IID-ness for the federated data.
+        Local_Nodes : slider
+            Number of local nodes (clients) used in the federated learning paradigm.
 
-            Raises
-            ------
-
-            Returns
-            -------
-            The return keyword is empty. The function shows the plot as output.
-
-            See Also
-            --------
-
-            References
-            ----------
-
-            Examples
-            --------
+        Returns
+        -------
+        The return keyword is empty. The function shows the plot as output.
         """
         labels_encoded = self.labels
 
@@ -512,34 +446,28 @@ class InteractivePlots:
         """
         Show an interactive stacked bar plot (with sliders) per each local node (client) and label's classes.
 
-            Parameters
-            ----------
-            **slider_kwargs: dict
-                Keyword arguments used for customizing sliders (inherited from ipywidgets.interact).
+        Parameters
+        ----------
+        **slider_kwargs: dict
+            Keyword arguments used for customizing sliders (inherited from ipywidgets.interact).
 
-            Raises
-            ------
+        Returns
+        -------
+        The return keyword is empty. The function shows the sliders for Pctg_noniid and number of local nodes
+        (clients).
 
-            Returns
-            -------
-            The return keyword is empty. The function shows the sliders for Pctg_noniid and number of local nodes
-            (clients).
+        References
+        ----------
+        .. [1] Hsieh, K., Phanishayee, A., Mutlu, O., & Gibbons, P. (2020, November). The non-iid data quagmire of decentralized machine learning. In International Conference on Machine Learning (pp. 4387-4398). PMLR.
+               https://proceedings.mlr.press/v119/hsieh20a/hsieh20a.pdf
 
-            See Also
-            --------
-
-            References
-            ----------
-            .. [1] Hsieh, K., Phanishayee, A., Mutlu, O., & Gibbons, P. (2020, November). The non-iid data quagmire of decentralized machine learning. In International Conference on Machine Learning (pp. 4387-4398). PMLR.
-                   https://proceedings.mlr.press/v119/hsieh20a/hsieh20a.pdf
-
-            Examples
-            --------
-            >>> from fedartml import InteractivePlots
-            >>> from keras.datasets import mnist
-            >>> (train_X, train_y), (test_X, test_y) = mnist.load_data()
-            >>> my_plot = InteractivePlots(labels = train_y)
-            >>> my_plot.show_stacked_distr_percent_noniid()
+        Examples
+        --------
+        >>> from fedartml import InteractivePlots
+        >>> from keras.datasets import mnist
+        >>> (train_X, train_y), (test_X, test_y) = mnist.load_data()
+        >>> my_plot = InteractivePlots(labels = train_y)
+        >>> my_plot.show_stacked_distr_percent_noniid()
         """
         interact(self.stacked_distr_percent_noniid,
                  Pctg_NonIID=FloatSlider(**slider_kwargs.get('pctg_noniid_slider_kwargs',
@@ -558,28 +486,16 @@ class InteractivePlots:
         """
         Create an interactive scatter plot (with sliders) per each local node (client) and label's classes.
 
-            Parameters
-            ----------
-            Pctg_NonIID : slider
-                Percentage (between o and 100) desired of non-IID-ness for the federated data.
-            Local_Nodes : slider
-                Number of local nodes (clients) used in the federated learning paradigm.
+        Parameters
+        ----------
+        Pctg_NonIID : slider
+            Percentage (between o and 100) desired of non-IID-ness for the federated data.
+        Local_Nodes : slider
+            Number of local nodes (clients) used in the federated learning paradigm.
 
-            Raises
-            ------
-
-            Returns
-            -------
-            The return keyword is empty. The function shows the plot as output.
-
-            See Also
-            --------
-
-            References
-            ----------
-
-            Examples
-            --------
+        Returns
+        -------
+        The return keyword is empty. The function shows the plot as output.
         """
         labels_encoded = self.labels
 
@@ -641,34 +557,28 @@ class InteractivePlots:
         """
         Show an interactive scatter plot (with sliders) per each local node (client) and label's classes.
 
-            Parameters
-            ----------
-            **slider_kwargs: dict
-                Keyword arguments used for customizing sliders (inherited from ipywidgets.interact).
+        Parameters
+        ----------
+        **slider_kwargs: dict
+            Keyword arguments used for customizing sliders (inherited from ipywidgets.interact).
 
-            Raises
-            ------
+        Returns
+        -------
+        The return keyword is empty. The function shows the sliders for Pctg_NonIID and number of local nodes
+        (clients).
 
-            Returns
-            -------
-            The return keyword is empty. The function shows the sliders for Pctg_NonIID and number of local nodes
-            (clients).
+        References
+        ----------
+        .. [1] Hsieh, K., Phanishayee, A., Mutlu, O., & Gibbons, P. (2020, November). The non-iid data quagmire of decentralized machine learning. In International Conference on Machine Learning (pp. 4387-4398). PMLR.
+               https://proceedings.mlr.press/v119/hsieh20a/hsieh20a.pdf
 
-            See Also
-            --------
-
-            References
-            ----------
-            .. [1] Hsieh, K., Phanishayee, A., Mutlu, O., & Gibbons, P. (2020, November). The non-iid data quagmire of decentralized machine learning. In International Conference on Machine Learning (pp. 4387-4398). PMLR.
-                   https://proceedings.mlr.press/v119/hsieh20a/hsieh20a.pdf
-
-            Examples
-            --------
-            >>> from fedartml import InteractivePlots
-            >>> from keras.datasets import mnist
-            >>> (train_X, train_y), (test_X, test_y) = mnist.load_data()
-            >>> my_plot = InteractivePlots(labels = train_y)
-            >>> my_plot.show_scatter_distr_percent_noniid()
+        Examples
+        --------
+        >>> from fedartml import InteractivePlots
+        >>> from keras.datasets import mnist
+        >>> (train_X, train_y), (test_X, test_y) = mnist.load_data()
+        >>> my_plot = InteractivePlots(labels = train_y)
+        >>> my_plot.show_scatter_distr_percent_noniid()
         """
         interact(self.scatter_distr_percent_noniid,
                  Pctg_NonIID=FloatSlider(**slider_kwargs.get('pctg_noniid_slider_kwargs',
@@ -687,28 +597,16 @@ class InteractivePlots:
         """
         Create an interactive bar plot (with sliders) divided per each local node (client).
 
-            Parameters
-            ----------
-            Pctg_NonIID : slider
-                Percentage (between o and 100) desired of non-IID-ness for the federated data.
-            Local_Nodes : slider
-                Number of local nodes (clients) used in the federated learning paradigm.
+        Parameters
+        ----------
+        Pctg_NonIID : slider
+            Percentage (between o and 100) desired of non-IID-ness for the federated data.
+        Local_Nodes : slider
+            Number of local nodes (clients) used in the federated learning paradigm.
 
-            Raises
-            ------
-
-            Returns
-            -------
-            The return keyword is empty. The function shows the plot as output.
-
-            See Also
-            --------
-
-            References
-            ----------
-
-            Examples
-            --------
+        Returns
+        -------
+        The return keyword is empty. The function shows the plot as output.
         """
         labels_encoded = self.labels
 
@@ -786,34 +684,28 @@ class InteractivePlots:
         """
         Show an interactive bar plot (with sliders) divided per each local node (client).
 
-            Parameters
-            ----------
-            **slider_kwargs: dict
-                Keyword arguments used for customizing sliders (inherited from ipywidgets.interact).
+        Parameters
+        ----------
+        **slider_kwargs: dict
+            Keyword arguments used for customizing sliders (inherited from ipywidgets.interact).
 
-            Raises
-            ------
+        Returns
+        -------
+        The return keyword is empty. The function shows the sliders for Pctg_NonIID and number of local nodes
+        (clients).
 
-            Returns
-            -------
-            The return keyword is empty. The function shows the sliders for Pctg_NonIID and number of local nodes
-            (clients).
+        References
+        ----------
+        .. [1] Hsieh, K., Phanishayee, A., Mutlu, O., & Gibbons, P. (2020, November). The non-iid data quagmire of decentralized machine learning. In International Conference on Machine Learning (pp. 4387-4398). PMLR.
+               https://proceedings.mlr.press/v119/hsieh20a/hsieh20a.pdf
 
-            See Also
-            --------
-
-            References
-            ----------
-            .. [1] Hsieh, K., Phanishayee, A., Mutlu, O., & Gibbons, P. (2020, November). The non-iid data quagmire of decentralized machine learning. In International Conference on Machine Learning (pp. 4387-4398). PMLR.
-                   https://proceedings.mlr.press/v119/hsieh20a/hsieh20a.pdf
-
-            Examples
-            --------
-            >>> from fedartml import InteractivePlots
-            >>> from keras.datasets import mnist
-            >>> (train_X, train_y), (test_X, test_y) = mnist.load_data()
-            >>> my_plot = InteractivePlots(labels = train_y)
-            >>> my_plot.show_bar_divided_distr_percent_noniid()
+        Examples
+        --------
+        >>> from fedartml import InteractivePlots
+        >>> from keras.datasets import mnist
+        >>> (train_X, train_y), (test_X, test_y) = mnist.load_data()
+        >>> my_plot = InteractivePlots(labels = train_y)
+        >>> my_plot.show_bar_divided_distr_percent_noniid()
         """
         interact(self.bar_divided_distr_percent_noniid,
                  Pctg_NonIID=FloatSlider(**slider_kwargs.get('pctg_noniid_slider_kwargs',
