@@ -20,12 +20,9 @@ class SplitAsFederatedData:
 
         References
         ----------
-        .. [1] (dirichlet) Tao Lin∗, Lingjing Kong∗, Sebastian U. Stich, Martin Jaggi. (2020). Ensemble Distillation for
-        Robust Model Fusion in Federated Learning
+        .. [1] (dirichlet) Tao Lin∗, Lingjing Kong∗, Sebastian U. Stich, Martin Jaggi. (2020). Ensemble Distillation for Robust Model Fusion in Federated Learning
                https://proceedings.neurips.cc/paper/2020/file/18df51b97ccd68128e994804f3eccc87-Supplemental.pdf
-        .. [2] (percent_noniid) Hsieh, K., Phanishayee, A., Mutlu, O., & Gibbons, P. (2020, November). The non-iid data
-        quagmire of decentralized machine learning. In International Conference on Machine Learning (pp. 4387-4398).
-        PMLR.
+        .. [2] (percent_noniid) Hsieh, K., Phanishayee, A., Mutlu, O., & Gibbons, P. (2020, November). The non-iid data quagmire of decentralized machine learning. In International Conference on Machine Learning (pp. 4387-4398). PMLR.
                https://proceedings.mlr.press/v119/hsieh20a/hsieh20a.pdf
     """
 
@@ -68,9 +65,7 @@ class SplitAsFederatedData:
 
             References
             ----------
-                .. [1] (percent_noniid) Hsieh, K., Phanishayee, A., Mutlu, O., & Gibbons, P. (2020, November).
-                The non-iid data quagmire of decentralized machine learning. In International Conference on Machine
-                Learning (pp. 4387-4398).PMLR.
+                .. [1] (percent_noniid) Hsieh, K., Phanishayee, A., Mutlu, O., & Gibbons, P. (2020, November). The non-iid data quagmire of decentralized machine learning. In International Conference on Machine Learning (pp. 4387-4398).PMLR.
                    https://proceedings.mlr.press/v119/hsieh20a/hsieh20a.pdf
             Examples
             --------
@@ -174,8 +169,7 @@ class SplitAsFederatedData:
 
             References
             ----------
-                .. [1] (dirichlet) Tao Lin∗, Lingjing Kong∗, Sebastian U. Stich, Martin Jaggi. (2020). Ensemble
-                Distillation for Robust Model Fusion in Federated Learning
+                .. [1] (dirichlet) Tao Lin∗, Lingjing Kong∗, Sebastian U. Stich, Martin Jaggi. (2020). Ensemble Distillation for Robust Model Fusion in Federated Learning
                     https://proceedings.neurips.cc/paper/2020/file/18df51b97ccd68128e994804f3eccc87-Supplemental.pdf
             Examples
             --------
@@ -257,38 +251,29 @@ class SplitAsFederatedData:
 
             Returns
             -------
-            , , ,
+
             fed_data : dict
-                Contains features (images) and labels for each local node (client) after federating the data. Includes
-                "with_class_completion" and "without_class_completion" cases.
+                Contains features (images) and labels for each local node (client) after federating the data. Includes "with_class_completion" and "without_class_completion" cases.
             ids_list_fed_data : array-like
                 Indexes of examples (partition) taken for each local node (client).
             num_missing_classes : array-like
                 Number of missing classes per each local node when creating the federated dataset
             distances : array-like
-                Distances calculated while measuring heterogeneity (non-IID-ness) of the label's distribution among
-                clients. Includes "with_class_completion" and "without_class_completion" cases.
+                Distances calculated while measuring heterogeneity (non-IID-ness) of the label's distribution among clients. Includes "with_class_completion" and "without_class_completion" cases.
 
-            Note: When creating federated data and setting heterogeneous distributions (i.e. high values of
-            percent_noniid or small values of alpha), it is more likely the clients hold examples from only one class.
+            Note: When creating federated data and setting heterogeneous distributions (i.e. high values of percent_noniid or small values of alpha), it is more likely the clients hold examples from only one class.
             Then, two cases are returned as output for fed_data and distances:
-                - "with_class_completion": In this case, the clients are completed with one (random) example of each
-                missing class for each client to have all the label's classes.
-                - "without_class_completion": In this case, the clients are NOT completed with one (random) example of
-                each missing class. Consequently, summing the number of examples of each client results in the same
-                number of total examples (number of rows in image_list).
+                - "with_class_completion": In this case, the clients are completed with one (random) example of each missing class for each client to have all the label's classes.
+                - "without_class_completion": In this case, the clients are NOT completed with one (random) example of each missing class. Consequently, summing the number of examples of each client results in the same number of total examples (number of rows in image_list).
 
             See Also
             --------
 
             References
             ----------
-                .. [1] (dirichlet) Tao Lin∗, Lingjing Kong∗, Sebastian U. Stich, Martin Jaggi. (2020). Ensemble
-                Distillation for Robust Model Fusion in Federated Learning0
+                .. [1] (dirichlet) Tao Lin∗, Lingjing Kong∗, Sebastian U. Stich, Martin Jaggi. (2020). Ensemble Distillation for Robust Model Fusion in Federated Learning0
                    https://proceedings.neurips.cc/paper/2020/file/18df51b97ccd68128e994804f3eccc87-Supplemental.pdf
-                .. [2] (percent_noniid) Hsieh, K., Phanishayee, A., Mutlu, O., & Gibbons, P. (2020, November). The
-                non-iid data quagmire of decentralized machine learning. In International Conference on Machine Learning
-                (pp. 4387-4398).PMLR.
+                .. [2] (percent_noniid) Hsieh, K., Phanishayee, A., Mutlu, O., & Gibbons, P. (2020, November). The non-iid data quagmire of decentralized machine learning. In International Conference on Machine Learning (pp. 4387-4398).PMLR.
                    https://proceedings.mlr.press/v119/hsieh20a/hsieh20a.pdf
             Examples
             --------

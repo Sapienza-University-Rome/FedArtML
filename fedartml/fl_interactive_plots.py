@@ -140,8 +140,7 @@ class InteractivePlots:
 
             References
             ----------
-            .. [1] Tao Lin∗, Lingjing Kong∗, Sebastian U. Stich, Martin Jaggi. (2020). Ensemble Distillation for Robust
-            Model Fusion in Federated Learning
+            .. [1] Tao Lin∗, Lingjing Kong∗, Sebastian U. Stich, Martin Jaggi. (2020). Ensemble Distillation for Robust Model Fusion in Federated Learning
                    https://proceedings.neurips.cc/paper/2020/file/18df51b97ccd68128e994804f3eccc87-Supplemental.pdf
 
             Examples
@@ -267,8 +266,7 @@ class InteractivePlots:
 
             References
             ----------
-            .. [1] Tao Lin∗, Lingjing Kong∗, Sebastian U. Stich, Martin Jaggi. (2020). Ensemble Distillation for Robust
-            Model Fusion in Federated Learning
+            .. [1] Tao Lin∗, Lingjing Kong∗, Sebastian U. Stich, Martin Jaggi. (2020). Ensemble Distillation for Robust Model Fusion in Federated Learning
                    https://proceedings.neurips.cc/paper/2020/file/18df51b97ccd68128e994804f3eccc87-Supplemental.pdf
 
             Examples
@@ -410,8 +408,7 @@ class InteractivePlots:
 
             References
             ----------
-            .. [1] Tao Lin∗, Lingjing Kong∗, Sebastian U. Stich, Martin Jaggi. (2020). Ensemble Distillation for Robust
-            Model Fusion in Federated Learning
+            .. [1] Tao Lin∗, Lingjing Kong∗, Sebastian U. Stich, Martin Jaggi. (2020). Ensemble Distillation for Robust Model Fusion in Federated Learning
                    https://proceedings.neurips.cc/paper/2020/file/18df51b97ccd68128e994804f3eccc87-Supplemental.pdf
 
             Examples
@@ -533,8 +530,7 @@ class InteractivePlots:
 
             References
             ----------
-            .. [1] Hsieh, K., Phanishayee, A., Mutlu, O., & Gibbons, P. (2020, November). The non-iid data quagmire of
-            decentralized machine learning. In International Conference on Machine Learning (pp. 4387-4398). PMLR.
+            .. [1] Hsieh, K., Phanishayee, A., Mutlu, O., & Gibbons, P. (2020, November). The non-iid data quagmire of decentralized machine learning. In International Conference on Machine Learning (pp. 4387-4398). PMLR.
                    https://proceedings.mlr.press/v119/hsieh20a/hsieh20a.pdf
 
             Examples
@@ -663,8 +659,7 @@ class InteractivePlots:
 
             References
             ----------
-            .. [1] Hsieh, K., Phanishayee, A., Mutlu, O., & Gibbons, P. (2020, November). The non-iid data quagmire of
-            decentralized machine learning. In International Conference on Machine Learning (pp. 4387-4398). PMLR.
+            .. [1] Hsieh, K., Phanishayee, A., Mutlu, O., & Gibbons, P. (2020, November). The non-iid data quagmire of decentralized machine learning. In International Conference on Machine Learning (pp. 4387-4398). PMLR.
                    https://proceedings.mlr.press/v119/hsieh20a/hsieh20a.pdf
 
             Examples
@@ -809,8 +804,7 @@ class InteractivePlots:
 
             References
             ----------
-            .. [1] Hsieh, K., Phanishayee, A., Mutlu, O., & Gibbons, P. (2020, November). The non-iid data quagmire of
-            decentralized machine learning. In International Conference on Machine Learning (pp. 4387-4398). PMLR.
+            .. [1] Hsieh, K., Phanishayee, A., Mutlu, O., & Gibbons, P. (2020, November). The non-iid data quagmire of decentralized machine learning. In International Conference on Machine Learning (pp. 4387-4398). PMLR.
                    https://proceedings.mlr.press/v119/hsieh20a/hsieh20a.pdf
 
             Examples
