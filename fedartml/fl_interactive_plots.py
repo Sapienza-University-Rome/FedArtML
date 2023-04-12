@@ -4,7 +4,6 @@ import matplotlib.ticker as mticker
 import numpy as np
 import pandas as pd
 from ipywidgets import interact, Layout, IntSlider, FloatLogSlider, FloatSlider
-from numpy.random import dirichlet
 
 from fedartml.function_base import jensen_shannon_distance, hellinger_distance, earth_movers_distance, get_spaced_colors
 from fedartml.fl_split_as_federated_data import SplitAsFederatedData
@@ -25,11 +24,14 @@ class InteractivePlots:
             output across multiple function calls.
         colors : list
             Colors list used to plot. Must have a length of 7 positions.
+        distance : str
+            Distance to use for measuring heterogeneity (non-IID-ness) of the label's distribution among clients.
+            Possible choices: "jensen-shannon", "hellinger", "earth_movers".
         **plot_kwargs : dict
             Keyword arguments used for customizing plots (inherited from matplotlib.pyplot).
     """
 
-    def __init__(self, labels, random_state=None, colors=None, distance ="jensen-shannon", **plot_kwargs):
+    def __init__(self, labels, random_state=None, colors=None, distance="jensen-shannon", **plot_kwargs):
         if colors is None:
             colors = ["#00cfcc", "#e6013b", "#007f88", "#00cccd", "#69e0da", "darkblue", "#FFFFFF"]
         self.labels = labels
@@ -46,7 +48,7 @@ class InteractivePlots:
             Parameters
             ----------
             Alpha : slider
-                Parameter of the Dirichlet distribution (length k for sample of length k).
+                Concentration parameter of the Dirichlet distribution.
             Local_Nodes : slider
                 Number of local nodes (clients) used in the federated learning paradigm.
 
@@ -75,8 +77,8 @@ class InteractivePlots:
 
         # Get random Dirichlet distribution
         lbl_distro_clients_pctg, lbl_distro_clients_num, lbl_distro_clients_idx, num_per_node = \
-            SplitAsFederatedData.dirichlet_method(self, labels_encoded, Local_Nodes, alpha=Alpha
-                                                  , random_state=self.random_state)
+            SplitAsFederatedData.dirichlet_method(self, labels_encoded, Local_Nodes, alpha=Alpha,
+                                                  random_state=self.random_state)
         # Calculate desired distance
         if self.distance == "jensen-shannon":
             dist_select = jensen_shannon_distance(lbl_distro_clients_pctg)
@@ -84,9 +86,12 @@ class InteractivePlots:
         elif self.distance == "hellinger":
             dist_select = hellinger_distance(lbl_distro_clients_pctg)
             text_dist = "Hellinger"
-        else:
+        elif self.distance == "earth_movers":
             dist_select = earth_movers_distance(lbl_distro_clients_pctg)
             text_dist = "Earth Mover’s"
+        else:
+            raise ValueError("Distance '" + self.distance + "' not implemented. Available distances are: ["
+                                                            "'jensen-shannon', 'hellinger', 'earth_movers']")
 
         # Defne dataframe to plot
         df_simul = pd.DataFrame(lbl_distro_clients_pctg).reset_index()
@@ -107,9 +112,9 @@ class InteractivePlots:
         plt.title(**self.plot_kwargs.get('stack_title_kwargs',
                                          {'label': "Label's classes distribution across local nodes", 'fontsize': 25}))
         plt.text(s=text_dist + " dist. = " + str(round(dist_select, 2)),
-                 **self.plot_kwargs.get('stack_text_JSD_kwargs', {'x': -0.3, 'y': 103.5, 'fontsize': 20,
-                                                                  'backgroundcolor': self.colors[2],
-                                                                  'color': self.colors[6]}))
+                 **self.plot_kwargs.get('stack_text_DIST_kwargs', {'x': -0.3, 'y': 103.5, 'fontsize': 20,
+                                                                   'backgroundcolor': self.colors[2],
+                                                                   'color': self.colors[6]}))
         plt.show()
 
         return ()
@@ -144,8 +149,7 @@ class InteractivePlots:
             >>> from fedartml import InteractivePlots
             >>> from keras.datasets import mnist
             >>> (train_X, train_y), (test_X, test_y) = mnist.load_data()
-            >>> my_labels = train_y
-            >>> my_plot = InteractivePlots(labels = my_labels)
+            >>> my_plot = InteractivePlots(labels = train_y)
             >>> my_plot.show_stacked_distr_dirichlet()
         """
         interact(self.stacked_distr_dirichlet,
@@ -166,7 +170,7 @@ class InteractivePlots:
             Parameters
             ----------
             Alpha : slider
-                Parameter of the Dirichlet distribution (length k for sample of length k).
+                Concentration parameter of the Dirichlet distribution.
             Local_Nodes : slider
                 Number of local nodes (clients) used in the federated learning paradigm.
 
@@ -195,8 +199,8 @@ class InteractivePlots:
 
         # Get random Dirichlet distribution
         lbl_distro_clients_pctg, lbl_distro_clients_num, lbl_distro_clients_idx, num_per_node = \
-            SplitAsFederatedData.dirichlet_method(self, labels_encoded, Local_Nodes, alpha=Alpha
-                                                  , random_state=self.random_state)
+            SplitAsFederatedData.dirichlet_method(self, labels_encoded, Local_Nodes, alpha=Alpha,
+                                                  random_state=self.random_state)
         # Calculate desired distance
         if self.distance == "jensen-shannon":
             dist_select = jensen_shannon_distance(lbl_distro_clients_pctg)
@@ -204,9 +208,12 @@ class InteractivePlots:
         elif self.distance == "hellinger":
             dist_select = hellinger_distance(lbl_distro_clients_pctg)
             text_dist = "Hellinger"
-        else:
+        elif self.distance == "earth_movers":
             dist_select = earth_movers_distance(lbl_distro_clients_pctg)
             text_dist = "Earth Mover’s"
+        else:
+            raise ValueError("Distance '" + self.distance + "' not implemented. Available distances are: ["
+                                                            "'jensen-shannon', 'hellinger', 'earth_movers']")
 
         # Defne dataframe to plot
         df_simul = pd.DataFrame(num_per_node).reset_index()
@@ -230,7 +237,7 @@ class InteractivePlots:
                                          {'label': "Number of examples across classes and local nodes",
                                           'fontsize': 25}))
         plt.text(s=text_dist + " dist. = " + str(round(dist_select, 2)),
-                 **self.plot_kwargs.get('scatter_text_JSD_kwargs',
+                 **self.plot_kwargs.get('scatter_text_DIST_kwargs',
                                         {'x': 0.6, 'y': len(np.unique(self.labels)), 'fontsize': 20,
                                          'backgroundcolor': self.colors[2], 'color': self.colors[6]}))
         plt.gca().xaxis.set_major_locator(mticker.MultipleLocator(1))
@@ -269,9 +276,8 @@ class InteractivePlots:
             >>> from fedartml import InteractivePlots
             >>> from keras.datasets import mnist
             >>> (train_X, train_y), (test_X, test_y) = mnist.load_data()
-            >>> my_labels = train_y
-            >>> my_plot = InteractivePlots(labels = my_labels)
-            >>> my_plot.show_stacked_distr_dirichlet()
+            >>> my_plot = InteractivePlots(labels = train_y)
+            >>> my_plot.show_scatter_distr_dirichlet()
         """
         interact(self.scatter_distr_dirichlet,
                  Alpha=FloatLogSlider(**slider_kwargs.get('alpha_slider_kwargs',
@@ -291,7 +297,7 @@ class InteractivePlots:
             Parameters
             ----------
             Alpha : slider
-                Parameter of the Dirichlet distribution (length k for sample of length k).
+                Concentration parameter of the Dirichlet distribution.
             Local_Nodes : slider
                 Number of local nodes (clients) used in the federated learning paradigm.
 
@@ -320,9 +326,8 @@ class InteractivePlots:
 
         # Get random Dirichlet distribution
         lbl_distro_clients_pctg, lbl_distro_clients_num, lbl_distro_clients_idx, num_per_node = \
-            SplitAsFederatedData.dirichlet_method(self, labels_encoded, Local_Nodes, alpha=Alpha
-                                                  , random_state=self.random_state)
-
+            SplitAsFederatedData.dirichlet_method(self, labels_encoded, Local_Nodes, alpha=Alpha,
+                                                  random_state=self.random_state)
         # Calculate desired distance
         if self.distance == "jensen-shannon":
             dist_select = jensen_shannon_distance(lbl_distro_clients_pctg)
@@ -330,9 +335,13 @@ class InteractivePlots:
         elif self.distance == "hellinger":
             dist_select = hellinger_distance(lbl_distro_clients_pctg)
             text_dist = "Hellinger"
-        else:
+        elif self.distance == "earth_movers":
             dist_select = earth_movers_distance(lbl_distro_clients_pctg)
             text_dist = "Earth Mover’s"
+        else:
+            raise ValueError("Distance '" + self.distance + "' not implemented. Available distances are: ["
+                                                            "'jensen-shannon', 'hellinger', 'earth_movers']")
+
         # Defne dataframe to plot
         df_simul = pd.DataFrame(num_per_node)
         df_simul = df_simul.div(df_simul.sum(axis=1), axis=0).reset_index()
@@ -372,7 +381,7 @@ class InteractivePlots:
             # Increase counter
             cont += 1
 
-        f.text(**self.plot_kwargs.get('bar_div_text_kwargs',
+        f.text(**self.plot_kwargs.get('bar_div_text_DIST_kwargs',
                                       {'x': 0.5, 'y': 0.97, 'ha': 'center', 'va': 'top', 'fontsize': 60,
                                        's': text_dist + " dist. = " + str(round(dist_select, 2)),
                                        'color': self.colors[6], 'backgroundcolor': self.colors[2]}))
@@ -410,9 +419,8 @@ class InteractivePlots:
             >>> from fedartml import InteractivePlots
             >>> from keras.datasets import mnist
             >>> (train_X, train_y), (test_X, test_y) = mnist.load_data()
-            >>> my_labels = train_y
-            >>> my_plot = InteractivePlots(labels = my_labels)
-            >>> my_plot.show_stacked_distr_dirichlet()
+            >>> my_plot = InteractivePlots(labels = train_y)
+            >>> my_plot.show_bar_divided_distr_dirichlet()
         """
         interact(self.bar_divided_distr_dirichlet,
                  Alpha=FloatLogSlider(**slider_kwargs.get('alpha_slider_kwargs',
@@ -432,7 +440,7 @@ class InteractivePlots:
             Parameters
             ----------
             Pctg_NonIID : slider
-                Percentage (between o and 100) desired of Non IID for the federated data.
+                Percentage (between o and 100) desired of non-IID-ness for the federated data.
             Local_Nodes : slider
                 Number of local nodes (clients) used in the federated learning paradigm.
 
@@ -461,8 +469,8 @@ class InteractivePlots:
 
         # Get Percentage of NonIID method
         lbl_distro_clients_pctg, lbl_distro_clients_num, lbl_distro_clients_idx, num_per_node = \
-            SplitAsFederatedData.percent_noniid_method(self, labels_encoded, Local_Nodes, pct_noniid=Pctg_NonIID
-                                                       , random_state=self.random_state)
+            SplitAsFederatedData.percent_noniid_method(self, labels_encoded, Local_Nodes, pct_noniid=Pctg_NonIID,
+                                                       random_state=self.random_state)
         # Calculate desired distance
         if self.distance == "jensen-shannon":
             dist_select = jensen_shannon_distance(lbl_distro_clients_pctg)
@@ -470,9 +478,12 @@ class InteractivePlots:
         elif self.distance == "hellinger":
             dist_select = hellinger_distance(lbl_distro_clients_pctg)
             text_dist = "Hellinger"
-        else:
+        elif self.distance == "earth_movers":
             dist_select = earth_movers_distance(lbl_distro_clients_pctg)
             text_dist = "Earth Mover’s"
+        else:
+            raise ValueError("Distance '" + self.distance + "' not implemented. Available distances are: ["
+                                                            "'jensen-shannon', 'hellinger', 'earth_movers']")
 
         # Defne dataframe to plot
         df_simul = pd.DataFrame(lbl_distro_clients_pctg).reset_index()
@@ -493,9 +504,9 @@ class InteractivePlots:
         plt.title(**self.plot_kwargs.get('stack_title_kwargs',
                                          {'label': "Label's classes distribution across local nodes", 'fontsize': 25}))
         plt.text(s=text_dist + " dist. = " + str(round(dist_select, 2)),
-                 **self.plot_kwargs.get('stack_text_JSD_kwargs', {'x': -0.3, 'y': 103.5, 'fontsize': 20,
-                                                                  'backgroundcolor': self.colors[2],
-                                                                  'color': self.colors[6]}))
+                 **self.plot_kwargs.get('stack_text_DIST_kwargs', {'x': -0.3, 'y': 103.5, 'fontsize': 20,
+                                                                   'backgroundcolor': self.colors[2],
+                                                                   'color': self.colors[6]}))
         plt.show()
 
         return ()
@@ -514,32 +525,33 @@ class InteractivePlots:
 
             Returns
             -------
-            The return keyword is empty. The function shows the sliders for Alpha and number of local nodes (clients).
+            The return keyword is empty. The function shows the sliders for Pctg_noniid and number of local nodes
+            (clients).
 
             See Also
             --------
 
             References
             ----------
-            .. [1] Tao Lin∗, Lingjing Kong∗, Sebastian U. Stich, Martin Jaggi. (2020). Ensemble Distillation for Robust
-            Model Fusion in Federated Learning
-                   https://proceedings.neurips.cc/paper/2020/file/18df51b97ccd68128e994804f3eccc87-Supplemental.pdf
+            .. [1] Hsieh, K., Phanishayee, A., Mutlu, O., & Gibbons, P. (2020, November). The non-iid data quagmire of
+            decentralized machine learning. In International Conference on Machine Learning (pp. 4387-4398). PMLR.
+                   https://proceedings.mlr.press/v119/hsieh20a/hsieh20a.pdf
 
             Examples
             --------
             >>> from fedartml import InteractivePlots
             >>> from keras.datasets import mnist
             >>> (train_X, train_y), (test_X, test_y) = mnist.load_data()
-            >>> my_labels = train_y
-            >>> my_plot = InteractivePlots(labels = my_labels)
-            >>> my_plot.show_stacked_distr_dirichlet()
+            >>> my_plot = InteractivePlots(labels = train_y)
+            >>> my_plot.show_stacked_distr_percent_noniid()
         """
         interact(self.stacked_distr_percent_noniid,
                  Pctg_NonIID=FloatSlider(**slider_kwargs.get('pctg_noniid_slider_kwargs',
-                                                                {'min': 0, 'max': 100, 'value': 0,
-                                                                 'readout_format': '.4'}),
-                                            layout=Layout(
-                                                **slider_kwargs.get('pctg_noniid_slider_lout_kwargs', {'width': '1000px'}))),
+                                                             {'min': 0, 'max': 100, 'value': 0,
+                                                              'readout_format': '.4'}),
+                                         layout=Layout(
+                                             **slider_kwargs.get('pctg_noniid_slider_lout_kwargs',
+                                                                 {'width': '1000px'}))),
                  Local_Nodes=IntSlider(**slider_kwargs.get('loc_nodes_slider_kwargs', {'min': 1, 'max': 10, 'step': 1,
                                                                                        'value': 4}),
                                        layout=Layout(
@@ -552,8 +564,8 @@ class InteractivePlots:
 
             Parameters
             ----------
-            Alpha : slider
-                Parameter of the Dirichlet distribution (length k for sample of length k).
+            Pctg_NonIID : slider
+                Percentage (between o and 100) desired of non-IID-ness for the federated data.
             Local_Nodes : slider
                 Number of local nodes (clients) used in the federated learning paradigm.
 
@@ -582,8 +594,8 @@ class InteractivePlots:
 
         # Get Percentage of NonIID method
         lbl_distro_clients_pctg, lbl_distro_clients_num, lbl_distro_clients_idx, num_per_node = \
-            SplitAsFederatedData.percent_noniid_method(self, labels_encoded, Local_Nodes, pct_noniid=Pctg_NonIID
-                                                       , random_state=self.random_state)
+            SplitAsFederatedData.percent_noniid_method(self, labels_encoded, Local_Nodes, pct_noniid=Pctg_NonIID,
+                                                       random_state=self.random_state)
         # Calculate desired distance
         if self.distance == "jensen-shannon":
             dist_select = jensen_shannon_distance(lbl_distro_clients_pctg)
@@ -591,9 +603,12 @@ class InteractivePlots:
         elif self.distance == "hellinger":
             dist_select = hellinger_distance(lbl_distro_clients_pctg)
             text_dist = "Hellinger"
-        else:
+        elif self.distance == "earth_movers":
             dist_select = earth_movers_distance(lbl_distro_clients_pctg)
             text_dist = "Earth Mover’s"
+        else:
+            raise ValueError("Distance '" + self.distance + "' not implemented. Available distances are: ["
+                                                            "'jensen-shannon', 'hellinger', 'earth_movers']")
 
         # Defne dataframe to plot
         df_simul = pd.DataFrame(num_per_node).reset_index()
@@ -617,7 +632,7 @@ class InteractivePlots:
                                          {'label': "Number of examples across classes and local nodes",
                                           'fontsize': 25}))
         plt.text(s=text_dist + " dist. = " + str(round(dist_select, 2)),
-                 **self.plot_kwargs.get('scatter_text_JSD_kwargs',
+                 **self.plot_kwargs.get('scatter_text_DIST_kwargs',
                                         {'x': 0.6, 'y': len(np.unique(self.labels)), 'fontsize': 20,
                                          'backgroundcolor': self.colors[2], 'color': self.colors[6]}))
         plt.gca().xaxis.set_major_locator(mticker.MultipleLocator(1))
@@ -640,32 +655,33 @@ class InteractivePlots:
 
             Returns
             -------
-            The return keyword is empty. The function shows the sliders for Alpha and number of local nodes (clients).
+            The return keyword is empty. The function shows the sliders for Pctg_NonIID and number of local nodes
+            (clients).
 
             See Also
             --------
 
             References
             ----------
-            .. [1] Tao Lin∗, Lingjing Kong∗, Sebastian U. Stich, Martin Jaggi. (2020). Ensemble Distillation for Robust
-            Model Fusion in Federated Learning
-                   https://proceedings.neurips.cc/paper/2020/file/18df51b97ccd68128e994804f3eccc87-Supplemental.pdf
+            .. [1] Hsieh, K., Phanishayee, A., Mutlu, O., & Gibbons, P. (2020, November). The non-iid data quagmire of
+            decentralized machine learning. In International Conference on Machine Learning (pp. 4387-4398). PMLR.
+                   https://proceedings.mlr.press/v119/hsieh20a/hsieh20a.pdf
 
             Examples
             --------
             >>> from fedartml import InteractivePlots
             >>> from keras.datasets import mnist
             >>> (train_X, train_y), (test_X, test_y) = mnist.load_data()
-            >>> my_labels = train_y
-            >>> my_plot = InteractivePlots(labels = my_labels)
-            >>> my_plot.show_stacked_distr_dirichlet()
+            >>> my_plot = InteractivePlots(labels = train_y)
+            >>> my_plot.show_scatter_distr_percent_noniid()
         """
         interact(self.scatter_distr_percent_noniid,
                  Pctg_NonIID=FloatSlider(**slider_kwargs.get('pctg_noniid_slider_kwargs',
-                                                                {'min': 0, 'max': 100, 'value': 0,
-                                                                 'readout_format': '.4'}),
-                                      layout=Layout(
-                                          **slider_kwargs.get('pctg_noniid_slider_lout_kwargs', {'width': '1000px'}))),
+                                                             {'min': 0, 'max': 100, 'value': 0,
+                                                              'readout_format': '.4'}),
+                                         layout=Layout(
+                                             **slider_kwargs.get('pctg_noniid_slider_lout_kwargs',
+                                                                 {'width': '1000px'}))),
                  Local_Nodes=IntSlider(**slider_kwargs.get('loc_nodes_slider_kwargs', {'min': 1, 'max': 10, 'step': 1,
                                                                                        'value': 4}),
                                        layout=Layout(
@@ -678,8 +694,8 @@ class InteractivePlots:
 
             Parameters
             ----------
-            Alpha : slider
-                Parameter of the Dirichlet distribution (length k for sample of length k).
+            Pctg_NonIID : slider
+                Percentage (between o and 100) desired of non-IID-ness for the federated data.
             Local_Nodes : slider
                 Number of local nodes (clients) used in the federated learning paradigm.
 
@@ -708,9 +724,8 @@ class InteractivePlots:
 
         # Get Percentage of NonIID method
         lbl_distro_clients_pctg, lbl_distro_clients_num, lbl_distro_clients_idx, num_per_node = \
-            SplitAsFederatedData.percent_noniid_method(self, labels_encoded, Local_Nodes, pct_noniid=Pctg_NonIID
-                                                       , random_state=self.random_state)
-
+            SplitAsFederatedData.percent_noniid_method(self, labels_encoded, Local_Nodes, pct_noniid=Pctg_NonIID,
+                                                       random_state=self.random_state)
         # Calculate desired distance
         if self.distance == "jensen-shannon":
             dist_select = jensen_shannon_distance(lbl_distro_clients_pctg)
@@ -718,9 +733,12 @@ class InteractivePlots:
         elif self.distance == "hellinger":
             dist_select = hellinger_distance(lbl_distro_clients_pctg)
             text_dist = "Hellinger"
-        else:
+        elif self.distance == "earth_movers":
             dist_select = earth_movers_distance(lbl_distro_clients_pctg)
             text_dist = "Earth Mover’s"
+        else:
+            raise ValueError("Distance '" + self.distance + "' not implemented. Available distances are: ["
+                                                            "'jensen-shannon', 'hellinger', 'earth_movers']")
 
         # Defne dataframe to plot
         df_simul = pd.DataFrame(num_per_node)
@@ -761,7 +779,7 @@ class InteractivePlots:
             # Increase counter
             cont += 1
 
-        f.text(**self.plot_kwargs.get('bar_div_text_kwargs',
+        f.text(**self.plot_kwargs.get('bar_div_text_DIST_kwargs',
                                       {'x': 0.5, 'y': 0.97, 'ha': 'center', 'va': 'top', 'fontsize': 60,
                                        's': text_dist + " dist. = " + str(round(dist_select, 2)),
                                        'color': self.colors[6], 'backgroundcolor': self.colors[2]}))
@@ -783,32 +801,33 @@ class InteractivePlots:
 
             Returns
             -------
-            The return keyword is empty. The function shows the sliders for Alpha and number of local nodes (clients).
+            The return keyword is empty. The function shows the sliders for Pctg_NonIID and number of local nodes
+            (clients).
 
             See Also
             --------
 
             References
             ----------
-            .. [1] Tao Lin∗, Lingjing Kong∗, Sebastian U. Stich, Martin Jaggi. (2020). Ensemble Distillation for Robust
-            Model Fusion in Federated Learning
-                   https://proceedings.neurips.cc/paper/2020/file/18df51b97ccd68128e994804f3eccc87-Supplemental.pdf
+            .. [1] Hsieh, K., Phanishayee, A., Mutlu, O., & Gibbons, P. (2020, November). The non-iid data quagmire of
+            decentralized machine learning. In International Conference on Machine Learning (pp. 4387-4398). PMLR.
+                   https://proceedings.mlr.press/v119/hsieh20a/hsieh20a.pdf
 
             Examples
             --------
             >>> from fedartml import InteractivePlots
             >>> from keras.datasets import mnist
             >>> (train_X, train_y), (test_X, test_y) = mnist.load_data()
-            >>> my_labels = train_y
-            >>> my_plot = InteractivePlots(labels = my_labels)
-            >>> my_plot.show_stacked_distr_dirichlet()
+            >>> my_plot = InteractivePlots(labels = train_y)
+            >>> my_plot.show_bar_divided_distr_percent_noniid()
         """
         interact(self.bar_divided_distr_percent_noniid,
                  Pctg_NonIID=FloatSlider(**slider_kwargs.get('pctg_noniid_slider_kwargs',
                                                              {'min': 0, 'max': 100, 'value': 0,
-                                                                 'readout_format': '.4'}),
+                                                              'readout_format': '.4'}),
                                          layout=Layout(
-                                          **slider_kwargs.get('pctg_noniid_slider_lout_kwargs', {'width': '1000px'}))),
+                                             **slider_kwargs.get('pctg_noniid_slider_lout_kwargs',
+                                                                 {'width': '1000px'}))),
                  Local_Nodes=IntSlider(**slider_kwargs.get('loc_nodes_slider_kwargs', {'min': 1, 'max': 10, 'step': 1,
                                                                                        'value': 4}),
                                        layout=Layout(

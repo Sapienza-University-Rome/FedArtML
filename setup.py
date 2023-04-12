@@ -20,7 +20,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="",
-    author="Daniel Mauricio Jimenez Gutierrez",
+    author="Daniel Mauricio Jimenez Gutierrez, Aris Anagnostopoulos, Ioannis Chatzigiannakis, Andrea Vitaletti",
     author_email="jimenezgutierrez@diag.uniroma1.it",
     license="MIT",
     classifiers=[

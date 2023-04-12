@@ -4,17 +4,16 @@
    contain the root `toctree` directive.
 
 Welcome to FedArtML's documentation!
-====================================
+===========================================
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Interactive plots:
 
+   source/api/InteractivePlots
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Create Federated Data:
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   source/api/SplitAsFederatedData

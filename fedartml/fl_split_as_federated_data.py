@@ -1,34 +1,81 @@
 # Importing libraries
-import random
 import numpy as np
 import pandas as pd
 from numpy.random import dirichlet
 from fedartml.function_base import jensen_shannon_distance, hellinger_distance, earth_movers_distance
-from sklearn.model_selection import StratifiedKFold
 
 
 class SplitAsFederatedData:
     """
-    Generate simulated interactive plots (with sliders) from the labels provided in a federated learning paradigm to
-    exemplify identically and non-identically distributed labels across the local nodes (clients).
+    Creates federated data from the provided centralized data (features and labels) to exemplify identically and
+    non-identically distributed labels and features across the local nodes (clients). It allows one to select between
+    two methods of data federation (percent_noniid and dirichlet). It works only for classification problems
+    (labels as classes).
 
         Parameters
         ----------
-        labels : array-like
-            The target values (class labels in classification).
         random_state : int
             Controls the shuffling applied to the generation of pseudorandom numbers. Pass an int for reproducible
             output across multiple function calls.
-        colors : list
-            Colors list used to plot. Must have a length of 7 positions.
-        **plot_kwargs : dict
-            Keyword arguments used for customizing plots (inherited from matplotlib.pyplot).
+
+        References
+        ----------
+        .. [1] (dirichlet) Tao Lin∗, Lingjing Kong∗, Sebastian U. Stich, Martin Jaggi. (2020). Ensemble Distillation for
+        Robust Model Fusion in Federated Learning
+               https://proceedings.neurips.cc/paper/2020/file/18df51b97ccd68128e994804f3eccc87-Supplemental.pdf
+        .. [2] (percent_noniid) Hsieh, K., Phanishayee, A., Mutlu, O., & Gibbons, P. (2020, November). The non-iid data
+        quagmire of decentralized machine learning. In International Conference on Machine Learning (pp. 4387-4398).
+        PMLR.
+               https://proceedings.mlr.press/v119/hsieh20a/hsieh20a.pdf
     """
 
     def __init__(self, random_state=None):
         self.random_state = random_state
 
     def percent_noniid_method(self, labels, local_nodes, pct_noniid=0, random_state=None):
+        """
+        Create a federated dataset divided per each local node (client) using the Percentage of Non-IID (pctg_noniid)
+        method.
+
+            Parameters
+            ----------
+            labels : array-like
+                The target values (class labels in classification).
+            local_nodes : array-like
+                Number of local nodes (clients) used in the federated learning paradigm.
+            pct_noniid : float
+                Percentage (between o and 100) desired of non-IID-ness for the federated data.
+            random_state : int
+                Controls the shuffling applied to the generation of pseudorandom numbers. Pass an int for reproducible
+                output across multiple function calls.
+
+            Raises
+            ------
+
+            Returns
+            -------
+            pctg_distr : array-like
+                Percentage (between 0 and 1) distribution of the classes for each local node (client).
+            num_distr : array-like
+                Numbers of distribution of the classes for each local node (client).
+            idx_distr : array-like
+                Indexes of examples (partition) taken for each local node (client).
+            num_per_node : array-like
+                Number of examples per each local node (client).
+
+            See Also
+            --------
+
+            References
+            ----------
+                .. [1] (percent_noniid) Hsieh, K., Phanishayee, A., Mutlu, O., & Gibbons, P. (2020, November).
+                The non-iid data quagmire of decentralized machine learning. In International Conference on Machine
+                Learning (pp. 4387-4398).PMLR.
+                   https://proceedings.mlr.press/v119/hsieh20a/hsieh20a.pdf
+            Examples
+            --------
+        """
+
         # Get number of examples in the noniid part
         n_noniid = int(len(labels) * (pct_noniid / 100))
 
@@ -92,12 +139,52 @@ class SplitAsFederatedData:
         return pctg_distr, num_distr, idx_distr, num_per_node
 
     def dirichlet_method(self, labels, local_nodes, alpha=0, random_state=None):
+        """
+        Create a federated dataset divided per each local node (client) using the Dirichlet (dirichlet) method.
+
+            Parameters
+            ----------
+            labels : array-like
+                The target values (class labels in classification).
+            local_nodes : array-like
+                Number of local nodes (clients) used in the federated learning paradigm.
+            alpha : float
+                Concentration parameter of the Dirichlet distribution defining the desired degree of non-IID-ness for
+                the federated data.
+            random_state : int
+                Controls the shuffling applied to the generation of pseudorandom numbers. Pass an int for reproducible
+                output across multiple function calls.
+
+            Raises
+            ------
+
+            Returns
+            -------
+            pctg_distr : array-like
+                Percentage (between 0 and 1) distribution of the classes for each local node (client).
+            num_distr : array-like
+                Numbers of distribution of the classes for each local node (client).
+            idx_distr : array-like
+                Indexes of examples (partition) taken for each local node (client).
+            num_per_node : array-like
+                Number of examples per each local node (client).
+
+            See Also
+            --------
+
+            References
+            ----------
+                .. [1] (dirichlet) Tao Lin∗, Lingjing Kong∗, Sebastian U. Stich, Martin Jaggi. (2020). Ensemble
+                Distillation for Robust Model Fusion in Federated Learning
+                    https://proceedings.neurips.cc/paper/2020/file/18df51b97ccd68128e994804f3eccc87-Supplemental.pdf
+            Examples
+            --------
+        """
         labels = np.array(labels)
 
         min_size = 0
         num_classes = len(np.unique(labels))
         N = labels.shape[0]
-        net_dataidx_map = {}
         random_state_loop = random_state
         while min_size < num_classes:
             idx_batch = [[] for _ in range(local_nodes)]
@@ -112,7 +199,8 @@ class SplitAsFederatedData:
                 proportions = (np.cumsum(proportions) * len(idx_k)).astype(int)[:-1]
                 idx_batch = [idx_j + idx.tolist() for idx_j, idx in zip(idx_batch, np.split(idx_k, proportions))]
                 min_size = min([len(idx_j) for idx_j in idx_batch])
-                random_state_loop += 100
+                if random_state is not None:
+                    random_state_loop += 100
 
         pctg_distr = []
         num_distr = []
@@ -136,34 +224,95 @@ class SplitAsFederatedData:
             pctg_distr.append(list(df_node.perc))
             num_distr.append(aux_examples_node)
             idx_distr.append(idx_batch[j])
-
-            random_state_loop += 100
+            if random_state is not None:
+                random_state_loop += 100
 
         return pctg_distr, num_distr, idx_distr, num_per_node
 
     def create_clients(self, image_list, label_list, num_clients=5, prefix_cli='client', method="percent_noniid",
                        alpha=1000, percent_noniid=0):
-        ''' return: a dictionary with keys clients' names and value as
-                    data shards - tuple of images and label lists.
-            args:
-                image_list: a list of numpy arrays of training images
-                label_list:a list of labels for each image
-                num_client: number of federated members (clients or local nodes)
-                prefix_cli: the clients' name prefix, e.g, client_1, client_2, etc.
-                method: method to federate (split) data: "percent_noniid"(default) or "dirichlet"
-                Alpha: concentration parameter(greater than 0) to control the identicalness from Dirichlet method
-                Percent_noniid: value (between 0 and 100) to control the identicalness from Percent of non iid method
-        '''
+        """
+        Create a federated dataset divided per each local node (client) using the desired method (percent_noniid or
+        dirichlet). It works only for classification problems (labels as classes).
+
+            Parameters
+            ----------
+            image_list : array-like
+                List of numpy arrays (or pandas dataframe) with images (i.e. features) from the centralized data.
+            label_list : array-like
+                The target values (class labels in classification) from the centralized data.
+            num_clients : array-like
+                Number of local nodes (clients) used in the federated learning paradigm.
+            prefix_cli : array-like
+                The clients' name prefix, e.g., client_1, client_2, etc.
+            method : array-like
+                Method to create the federated data. Possible options: "percent_noniid"(default) or "dirichlet"
+            alpha : array-like
+                Concentration parameter of the Dirichlet distribution defining the desired degree of non-IID-ness for
+                the federated data.
+            percent_noniid : array-like
+                Percentage (between o and 100) desired of non-IID-ness for the federated data.
+            Raises
+            ------
+
+            Returns
+            -------
+            , , ,
+            fed_data : dict
+                Contains features (images) and labels for each local node (client) after federating the data. Includes
+                "with_class_completion" and "without_class_completion" cases.
+            ids_list_fed_data : array-like
+                Indexes of examples (partition) taken for each local node (client).
+            num_missing_classes : array-like
+                Number of missing classes per each local node when creating the federated dataset
+            distances : array-like
+                Distances calculated while measuring heterogeneity (non-IID-ness) of the label's distribution among
+                clients. Includes "with_class_completion" and "without_class_completion" cases.
+
+            Note: When creating federated data and setting heterogeneous distributions (i.e. high values of
+            percent_noniid or small values of alpha), it is more likely the clients hold examples from only one class.
+            Then, two cases are returned as output for fed_data and distances:
+                - "with_class_completion": In this case, the clients are completed with one (random) example of each
+                missing class for each client to have all the label's classes.
+                - "without_class_completion": In this case, the clients are NOT completed with one (random) example of
+                each missing class. Consequently, summing the number of examples of each client results in the same
+                number of total examples (number of rows in image_list).
+
+            See Also
+            --------
+
+            References
+            ----------
+                .. [1] (dirichlet) Tao Lin∗, Lingjing Kong∗, Sebastian U. Stich, Martin Jaggi. (2020). Ensemble
+                Distillation for Robust Model Fusion in Federated Learning0
+                   https://proceedings.neurips.cc/paper/2020/file/18df51b97ccd68128e994804f3eccc87-Supplemental.pdf
+                .. [2] (percent_noniid) Hsieh, K., Phanishayee, A., Mutlu, O., & Gibbons, P. (2020, November). The
+                non-iid data quagmire of decentralized machine learning. In International Conference on Machine Learning
+                (pp. 4387-4398).PMLR.
+                   https://proceedings.mlr.press/v119/hsieh20a/hsieh20a.pdf
+            Examples
+            --------
+            >>> from fedartml import SplitAsFederatedData
+            >>> from keras.datasets import mnist
+            >>> (train_X, train_y), (test_X, test_y) = mnist.load_data()
+            >>> my_federater = SplitAsFederatedData(random_state=0)
+            >>>
+            >>> # Using percent_noniid method
+            >>> clients_glob, list_ids_sampled, miss_class_per_node, distances =
+            >>>     my_federater.create_clients(image_list=train_X, label_list=train_y, num_clients=4,
+            >>>     prefix_cli='Local_node',method="percent_noniid", percent_noniid=0)
+            >>>
+            >>> # Using dirichlet method
+            >>> clients_glob, list_ids_sampled, miss_class_per_node, distances =
+            >>>     my_federater.create_clients(image_list=train_X, label_list=train_y, num_clients=4,
+            >>>     prefix_cli='Local_node',method="dirichlet", alpha=1000)
+        """
         # create a list of client names
         client_names = ['{}_{}'.format(prefix_cli, i + 1) for i in range(num_clients)]
-        num_classes = len(np.unique(label_list))
 
         # Zip the data as list
         data = list(zip(image_list, label_list))
-        # Get size of each client
-        size = len(data) // num_clients
-        # Set list to append the position of the recordings extracted
-        ids_list = []
+
         num_missing_classes = []
         # Set list to append labels and features for each client
         shards_no_completion = []
@@ -176,20 +325,17 @@ class SplitAsFederatedData:
         ids_list_with_completion = []
 
         if method == "dirichlet":
-            lbl_distro_clients_pctg, lbl_distro_clients_num, lbl_distro_clients_idx, num_per_node = self.dirichlet_method(
-                labels=label_list,
-                local_nodes=num_clients,
-                alpha=alpha,
-                random_state=random_state_loop)
+            lbl_distro_clients_pctg, lbl_distro_clients_num, lbl_distro_clients_idx, num_per_node = \
+                self.dirichlet_method(labels=label_list, local_nodes=num_clients, alpha=alpha,
+                                      random_state=random_state_loop)
+        elif method == "percent_noniid":
+            lbl_distro_clients_pctg, lbl_distro_clients_num, lbl_distro_clients_idx, num_per_node = \
+                self.percent_noniid_method(labels=label_list, local_nodes=num_clients, pct_noniid=percent_noniid,
+                                           random_state=random_state_loop)
         else:
-            lbl_distro_clients_pctg, lbl_distro_clients_num, lbl_distro_clients_idx, num_per_node = self.percent_noniid_method(
-                labels=label_list,
-                local_nodes=num_clients,
-                pct_noniid=percent_noniid,
-                random_state=
-                random_state_loop)
-
-        # Calculate Jensen-Shannon distance
+            raise ValueError("Method '" + method + "' not implemented. Available methods are: ['percent_noniid', "
+                                                   "'dirichlet']")
+            # Calculate Jensen-Shannon distance
         JS_dist = jensen_shannon_distance(lbl_distro_clients_pctg)
         # Calculate Hellinger distance
         H_dist = hellinger_distance(lbl_distro_clients_pctg)
@@ -242,8 +388,8 @@ class SplitAsFederatedData:
             ids_list_with_completion.append(lbl_distro_clients_idx[i])
 
             shards_with_completion.append(list(zip(X, y)))
-
-            random_state_loop += self.random_state + 100
+            if self.random_state is not None:
+                random_state_loop += self.random_state + 100
 
         # Add elements to dictionary of federated data
         fed_data['with_class_completion'] = \

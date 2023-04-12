@@ -3,6 +3,7 @@ import math
 import pandas as pd
 from scipy.stats import wasserstein_distance
 
+
 def normalize_value(value, min_val=0, max_val=1):
     """
     Scale (Normalize) input value between min_val and max_val.
@@ -67,18 +68,19 @@ def jensen_shannon_distance(prob_dists):
     weight = 1 / len(prob_dists)
     js_left = np.zeros(len(prob_dists[0]))
     js_right = 0
-    for pd in prob_dists:
-        js_left += np.array(pd) * weight
-        js_right += weight * entropy(pd, normalize=False)
+    for prd in prob_dists:
+        js_left += np.array(prd) * weight
+        js_right += weight * entropy(prd, normalize=False)
 
     jsd_val = entropy(js_left, normalize=False) - js_right
 
     if len(prob_dists) > 2:
         jsd_val = normalize_value(jsd_val, min_val=0, max_val=math.log2(len(prob_dists)))
-    return min(np.sqrt(jsd_val),1.0)
+
+    jsd_val = min(np.sqrt(jsd_val), 1.0)
+    return jsd_val
 
 
-#
 def entropy(prob_dist, normalize=True):
     """
     Calculate the entropy.
@@ -147,30 +149,81 @@ def get_spaced_colors(n):
 
 
 def get_stratified_data(df, strat_var, strat_classes, strat_counts, random_state):
+    df_strat = []
 
-  df_strat = []
+    for i in range(len(strat_classes)):
+        if int(strat_counts[i]) == 0:
+            df_filt = df[df[strat_var] == strat_classes[i]].sample(replace=True, n=1, random_state=random_state)
+        else:
+            df_filt = df[df[strat_var] == strat_classes[i]].sample(replace=True, n=int(strat_counts[i]),
+                                                                   random_state=random_state)
 
-  for i in range(len(strat_classes)):
-    if int(strat_counts[i]) == 0:
-      df_filt = df[df[strat_var] == strat_classes[i]].sample(replace=True, n=1, random_state=random_state)
-    else:
-      df_filt = df[df[strat_var] == strat_classes[i]].sample(replace=True, n=int(strat_counts[i]), random_state=random_state)
+        df_strat.append(df_filt)
 
-    df_strat.append(df_filt)
+    df_strat = pd.concat(df_strat, axis=0)
 
-  df_strat = pd.concat(df_strat, axis=0)
+    return df_strat
 
-  return(df_strat)
 
 def hellinger_distance(distributions):
+    """
+    Calculate the Hellinger distance for multiple probability distributions.
+
+        Parameters
+        ----------
+        distributions : array-like
+            Distribution (percentages) of labels for each local node (client).
+
+        Raises
+        ------
+
+        Returns
+        -------
+        hd_val: float
+            Hellinger distance.
+
+        See Also
+        --------
+
+        References
+        ----------
+
+        Examples
+        --------
+    """
     n = len(distributions)
-    m = len(distributions[0])
     sqrt_d = np.sqrt(distributions)
     h = np.sum((sqrt_d[:, np.newaxis, :] - sqrt_d[np.newaxis, :, :]) ** 2, axis=2)
-    return np.sqrt(np.sum(h) / (2 * n * (n - 1)))
+    hd_val = np.sqrt(np.sum(h) / (2 * n * (n - 1)))
+    return hd_val
 
 
 def earth_movers_distance(D):
+    """
+    Calculate the Earth Mover's distance for multiple probability distributions.
+
+        Parameters
+        ----------
+        D : array-like
+            Distribution (percentages) of labels for each local node (client).
+
+        Raises
+        ------
+
+        Returns
+        -------
+        emd_val: float
+            Earth Mover's distance.
+
+        See Also
+        --------
+
+        References
+        ----------
+
+        Examples
+        --------
+    """
     D = np.array(D)
     # Calculate pairwise distances between distributions using EMD
     n = D.shape[0]
@@ -181,6 +234,6 @@ def earth_movers_distance(D):
     np.fill_diagonal(emd_distances, 0)
 
     # Calculate the average pairwise distance
-    avg_distance = np.mean(emd_distances[np.triu_indices(n, k=1)])
+    emd_val = np.mean(emd_distances[np.triu_indices(n, k=1)])
 
-    return (avg_distance)
+    return emd_val
