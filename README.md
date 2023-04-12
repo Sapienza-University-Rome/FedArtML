@@ -60,4 +60,4 @@ You can also check broader guides to use this tool on the [examples](https://git
 
 ### Documentation
 Find the documentation of the library on:
-https://fedartml.readthedocs.io/en/latest/
+https://fedartml.readthedocs.io/en/latest/index.html#
