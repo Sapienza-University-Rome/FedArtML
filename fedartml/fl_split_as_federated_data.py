@@ -166,9 +166,9 @@ class SplitAsFederatedData:
         num_classes = len(np.unique(labels))
         N = labels.shape[0]
         random_state_loop = random_state
-        idx_batch = [[] for _ in range(local_nodes)]
-        while min_size < num_classes:
 
+        while min_size < num_classes:
+            idx_batch = [[] for _ in range(local_nodes)]
             for k in range(num_classes):
                 idx_k = np.where(labels == k)[0]
                 np.random.seed(random_state_loop)
