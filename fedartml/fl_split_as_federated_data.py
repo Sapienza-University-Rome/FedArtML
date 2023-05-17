@@ -127,7 +127,7 @@ class SplitAsFederatedData:
 
         return pctg_distr, num_distr, idx_distr, num_per_node
 
-    def dirichlet_method(self, labels, local_nodes, alpha=0, random_state=None):
+    def dirichlet_method(self, labels, local_nodes, alpha=1000, random_state=None):
         """
         Create a federated dataset divided per each local node (client) using the Dirichlet (dirichlet) method.
 
@@ -166,8 +166,9 @@ class SplitAsFederatedData:
         num_classes = len(np.unique(labels))
         N = labels.shape[0]
         random_state_loop = random_state
+        idx_batch = [[] for _ in range(local_nodes)]
         while min_size < num_classes:
-            idx_batch = [[] for _ in range(local_nodes)]
+
             for k in range(num_classes):
                 idx_k = np.where(labels == k)[0]
                 np.random.seed(random_state_loop)
@@ -209,7 +210,7 @@ class SplitAsFederatedData:
 
         return pctg_distr, num_distr, idx_distr, num_per_node
 
-    def create_clients(self, image_list, label_list, num_clients=5, prefix_cli='client', method="percent_noniid",
+    def create_clients(self, image_list, label_list, num_clients=4, prefix_cli='client', method="percent_noniid",
                        alpha=1000, percent_noniid=0):
         """
         Create a federated dataset divided per each local node (client) using the desired method (percent_noniid or
