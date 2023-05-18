@@ -160,6 +160,8 @@ class SplitAsFederatedData:
             .. [1] (dirichlet) Tao Lin∗, Lingjing Kong∗, Sebastian U. Stich, Martin Jaggi. (2020). Ensemble Distillation for Robust Model Fusion in Federated Learning
                 https://proceedings.neurips.cc/paper/2020/file/18df51b97ccd68128e994804f3eccc87-Supplemental.pdf
         """
+        # https://github.com/Xtra-Computing/NIID-Bench/blob/main/partition.py
+        # https://github.com/IBM/probabilistic-federated-neural-matching/blob/master/experiment.py
         labels = np.array(labels)
 
         min_size = 0
@@ -167,7 +169,7 @@ class SplitAsFederatedData:
         N = labels.shape[0]
         random_state_loop = random_state
 
-        while min_size < num_classes:
+        while min_size < 10:
             idx_batch = [[] for _ in range(local_nodes)]
             for k in range(num_classes):
                 idx_k = np.where(labels == k)[0]
