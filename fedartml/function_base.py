@@ -195,7 +195,7 @@ def hellinger_distance(distributions):
     sqrt_d = np.sqrt(distributions)
     h = np.sum((sqrt_d[:, np.newaxis, :] - sqrt_d[np.newaxis, :, :]) ** 2, axis=2)
     hd_val = np.sqrt(np.sum(h) / (2 * n * (n - 1)))
-    hd_val = min(np.sqrt(hd_val), 1.0)
+    hd_val = min(hd_val, 1.0)
     return hd_val
 
 
