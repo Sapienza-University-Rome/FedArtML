@@ -29,7 +29,8 @@ class SplitAsFederatedData:
     def __init__(self, random_state=None):
         self.random_state = random_state
 
-    def percent_noniid_method(self, labels, local_nodes, pct_noniid=0, random_state=None):
+    @staticmethod
+    def percent_noniid_method(labels, local_nodes, pct_noniid=0, random_state=None):
         """
         Create a federated dataset divided per each local node (client) using the Percentage of Non-IID (pctg_noniid)
         method.
@@ -38,7 +39,7 @@ class SplitAsFederatedData:
         ----------
         labels : array-like
             The target values (class labels in classification).
-        local_nodes : array-like
+        local_nodes : int
             Number of local nodes (clients) used in the federated learning paradigm.
         pct_noniid : float
             Percentage (between o and 100) desired of non-IID-ness for the federated data.
@@ -127,7 +128,8 @@ class SplitAsFederatedData:
 
         return pctg_distr, num_distr, idx_distr, num_per_node
 
-    def dirichlet_method(self, labels, local_nodes, alpha=1000, random_state=None):
+    @staticmethod
+    def dirichlet_method(labels, local_nodes, alpha=1000, random_state=None):
         """
         Create a federated dataset divided per each local node (client) using the Dirichlet (dirichlet) method.
 
@@ -135,7 +137,7 @@ class SplitAsFederatedData:
         ----------
         labels : array-like
             The target values (class labels in classification).
-        local_nodes : array-like
+        local_nodes : int
             Number of local nodes (clients) used in the federated learning paradigm.
         alpha : float
             Concentration parameter of the Dirichlet distribution defining the desired degree of non-IID-ness for
@@ -212,8 +214,72 @@ class SplitAsFederatedData:
 
         return pctg_distr, num_distr, idx_distr, num_per_node
 
+    @staticmethod
+    def add_gaussian_noise(feat, mu=0, sigma=0, client_id=0, local_nodes=4, random_state=None):
+        """
+        Add Gaussian random noise to given features.
+
+        Parameters
+        ----------
+        feat : array-like
+            List of numpy arrays (or pandas dataframe) with images (i.e. features).
+        mu : float
+            Mean (“centre”) of the Gaussian distribution.
+        sigma : float
+            Standard deviation (noise) of the Gaussian distribution. Must be non-negative.
+        client_id : int
+            Identification or number of the client to add the noise.
+        local_nodes : int
+            Number of local nodes (clients) used in the federated learning paradigm.
+        random_state: int
+            Controls the shuffling applied to the generation of pseudorandom numbers. Pass an int for reproducible
+            output across multiple function calls.
+
+        Returns
+        -------
+        feat : array-like
+            List of numpy arrays (or pandas dataframe) with images (i.e. features) with the random noise applied.
+
+        References
+        ----------
+            .. [1] (gaussian noise) Li, Q., Diao, Y., Chen, Q., & He, B. (2022, May). Federated learning on non-iid data silos: An experimental study. In 2022 IEEE 38th International Conference on Data Engineering (ICDE) (pp. 965-978). IEEE.
+        """
+
+        noise_level = sigma / (local_nodes * (client_id + 1))
+        np.random.seed(random_state)
+        noise = np.random.normal(mu, noise_level, feat.shape)
+        feat = feat + noise
+        return feat
+
+    @staticmethod
+    def create_histogram(flat_input, bins):
+        """
+        Create histogram and bins from given flatted features.
+
+        Parameters
+        ----------
+        flat_input : array-like (flatten)
+            List of numpy arrays (or pandas dataframe) with images (i.e. features) flatten.
+        bins : int
+            Number of bins to use in the histogram.
+
+        Returns
+        -------
+        histogram : array-like
+            The values of the histogram. Normalized to sum up to 1.
+        bin_edges : array-like
+            The bin edges.
+
+        References
+        ----------
+
+        """
+        histogram, bin_edges = np.histogram(flat_input, bins=bins)
+        histogram = histogram / flat_input.shape[0]
+        return histogram, bin_edges
+
     def create_clients(self, image_list, label_list, num_clients=4, prefix_cli='client', method="percent_noniid",
-                       alpha=1000, percent_noniid=0):
+                       alpha=1000, percent_noniid=0, sigma_noise=0, bins=10 ** 5):
         """
         Create a federated dataset divided per each local node (client) using the desired method (percent_noniid or
         dirichlet). It works only for classification problems (labels as classes).
@@ -224,18 +290,21 @@ class SplitAsFederatedData:
             List of numpy arrays (or pandas dataframe) with images (i.e. features) from the centralized data.
         label_list : array-like
             The target values (class labels in classification) from the centralized data.
-        num_clients : array-like
+        num_clients : int
             Number of local nodes (clients) used in the federated learning paradigm.
-        prefix_cli : array-like
+        prefix_cli : string
             The clients' name prefix, e.g., client_1, client_2, etc.
-        method : array-like
+        method : string
             Method to create the federated data. Possible options: "percent_noniid"(default) or "dirichlet"
-        alpha : array-like
+        alpha : float
             Concentration parameter of the Dirichlet distribution defining the desired degree of non-IID-ness for
             the federated data.
-        percent_noniid : array-like
+        percent_noniid : float
             Percentage (between o and 100) desired of non-IID-ness for the federated data.
-
+        sigma_noise : float
+            Noise (sigma parameter of Gaussian distro) to be added to the features.
+        bins : int
+            Number of bins used to create histogram of features to check feature skew.
         Returns
         -------
         fed_data : dict
@@ -244,11 +313,11 @@ class SplitAsFederatedData:
             Indexes of examples (partition) taken for each local node (client).
         num_missing_classes : array-like
             Number of missing classes per each local node when creating the federated dataset
-        distances : array-like
+        distances : dict
             Distances calculated while measuring heterogeneity (non-IID-ness) of the label's distribution among clients. Includes "with_class_completion" and "without_class_completion" cases.
 
         Note: When creating federated data and setting heterogeneous distributions (i.e. high values of percent_noniid or small values of alpha), it is more likely the clients hold examples from only one class.
-        Then, two cases are returned as output for fed_data and distances:
+        Then, two cases (for labels and featires) are returned as output for fed_data and distances:
             - "with_class_completion": In this case, the clients are completed with one (random) example of each missing class for each client to have all the label's classes.
             - "without_class_completion": In this case, the clients are NOT completed with one (random) example of each missing class. Consequently, summing the number of examples of each client results in the same number of total examples (number of rows in image_list).
 
@@ -258,6 +327,7 @@ class SplitAsFederatedData:
                https://proceedings.neurips.cc/paper/2020/file/18df51b97ccd68128e994804f3eccc87-Supplemental.pdf
             .. [2] (percent_noniid) Hsieh, K., Phanishayee, A., Mutlu, O., & Gibbons, P. (2020, November). The non-iid data quagmire of decentralized machine learning. In International Conference on Machine Learning (pp. 4387-4398).PMLR.
                https://proceedings.mlr.press/v119/hsieh20a/hsieh20a.pdf
+            .. [3] (gaussian noise) Li, Q., Diao, Y., Chen, Q., & He, B. (2022, May). Federated learning on non-iid data silos: An experimental study. In 2022 IEEE 38th International Conference on Data Engineering (ICDE) (pp. 965-978). IEEE.
         Examples
         --------
         >>> from fedartml import SplitAsFederatedData
@@ -303,7 +373,7 @@ class SplitAsFederatedData:
         else:
             raise ValueError("Method '" + method + "' not implemented. Available methods are: ['percent_noniid', "
                                                    "'dirichlet']")
-            # Calculate Jensen-Shannon distance
+        # Calculate Jensen-Shannon distance
         JS_dist = jensen_shannon_distance(lbl_distro_clients_pctg)
         # Calculate Hellinger distance
         H_dist = hellinger_distance(lbl_distro_clients_pctg)
@@ -319,11 +389,29 @@ class SplitAsFederatedData:
         fed_data = {}
         ids_list_fed_data = {}
         pctg_distr = []
-
+        dist_hist_no_completion = []
+        dist_hist_with_completion = []
         for i in range(num_clients):
 
-            X = data_df.iloc[lbl_distro_clients_idx[i], 0].values.tolist()
-            y = data_df.iloc[lbl_distro_clients_idx[i], 1].values.tolist()
+            X = data_df.iloc[lbl_distro_clients_idx[i], 0].values
+            y = data_df.iloc[lbl_distro_clients_idx[i], 1].values
+
+            if isinstance(X[0], list):
+                X = np.array(X.tolist())
+
+            if sigma_noise > 0:
+                X = self.add_gaussian_noise(feat=X, sigma=sigma_noise, client_id=i, local_nodes=num_clients,
+                                            random_state=random_state_loop)
+
+                flattenX = np.concatenate([np.ravel(X[j]) for j in range(X.shape[0])])
+
+                histogram, bin_edges = self.create_histogram(flat_input=flattenX, bins=bins)
+            else:
+                histogram, bin_edges = np.zeros((bins,)), np.zeros((bins + 1,))
+
+            dist_hist_no_completion.append(list(histogram))
+            X = X.tolist()
+            y = y.tolist()
 
             # Get the index (name) of the recordings sampled
             ids_list_no_completion.append(lbl_distro_clients_idx[i])
@@ -341,8 +429,26 @@ class SplitAsFederatedData:
 
                     lbl_distro_clients_idx[i] = lbl_distro_clients_idx[i] + [vals]
 
-            X = data_df.iloc[lbl_distro_clients_idx[i], 0].values.tolist()
-            y = data_df.iloc[lbl_distro_clients_idx[i], 1].values.tolist()
+            X = data_df.iloc[lbl_distro_clients_idx[i], 0].values
+            y = data_df.iloc[lbl_distro_clients_idx[i], 1].values
+
+            if isinstance(X[0], list):
+                X = np.array(X.tolist())
+
+            if sigma_noise > 0:
+                X = self.add_gaussian_noise(feat=X, sigma=sigma_noise, client_id=i, local_nodes=num_clients,
+                                            random_state=random_state_loop)
+
+                flattenX = np.concatenate([np.ravel(X[j]) for j in range(X.shape[0])])
+
+                histogram, bin_edges = self.create_histogram(flat_input=flattenX, bins=bins)
+            else:
+                histogram, bin_edges = np.zeros((bins,)), np.zeros((bins + 1,))
+
+            dist_hist_with_completion.append(list(histogram))
+
+            X = X.tolist()
+            y = y.tolist()
 
             # Get distribution of labels
             df_aux = pd.DataFrame(y, columns=['label']).label.value_counts().reset_index()
@@ -369,14 +475,33 @@ class SplitAsFederatedData:
         ids_list_fed_data['with_class_completion'] = ids_list_with_completion
         ids_list_fed_data['without_class_completion'] = ids_list_no_completion
 
-        # Calculate Jensen-Shannon distance
+        # Calculate Jensen-Shannon distance for labels
         JS_dist = jensen_shannon_distance(pctg_distr)
-        # Calculate Hellinger distance
-        H_dist = hellinger_distance(pctg_distr)
-        # Calculate Earth Mover’s distance
+        # Calculate Hellinger distance for labels
+        HD_dist = hellinger_distance(pctg_distr)
+        # Calculate Earth Mover’s distance for labels
         emd_dist = earth_movers_distance(pctg_distr)
-
-        distances['with_class_completion'] = {'jensen-shannon': JS_dist, 'hellinger': H_dist,
+        distances['with_class_completion'] = {'jensen-shannon': JS_dist, 'hellinger': HD_dist,
                                               'earth-movers': emd_dist}
+
+        # Calculate Jensen-Shannon distance for features (no completion)
+        JS_dist_feat = jensen_shannon_distance(dist_hist_no_completion)
+        # Calculate Hellinger distance for features (no completion)
+        H_dist_feat = hellinger_distance(dist_hist_no_completion)
+        # Calculate Earth Mover’s distance for features (no completion)
+        emd_dist_feat = earth_movers_distance(dist_hist_no_completion)
+
+        distances['without_class_completion_feat'] = {'jensen-shannon': JS_dist_feat, 'hellinger': H_dist_feat,
+                                                      'earth-movers': emd_dist_feat}
+
+        # Calculate Jensen-Shannon distance for features (with completion)
+        JS_dist_feat = jensen_shannon_distance(dist_hist_with_completion)
+        # Calculate Hellinger distance for features (with completion)
+        H_dist_feat = hellinger_distance(dist_hist_with_completion)
+        # Calculate Earth Mover’s distance for features (with completion)
+        emd_dist_feat = earth_movers_distance(dist_hist_with_completion)
+
+        distances['with_class_completion_feat'] = {'jensen-shannon': JS_dist_feat, 'hellinger': H_dist_feat,
+                                                   'earth-movers': emd_dist_feat}
 
         return fed_data, ids_list_fed_data, num_missing_classes, distances

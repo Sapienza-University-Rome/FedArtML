@@ -65,7 +65,7 @@ class InteractivePlots:
 
         # Get random Dirichlet distribution
         lbl_distro_clients_pctg, lbl_distro_clients_num, lbl_distro_clients_idx, num_per_node = \
-            SplitAsFederatedData.dirichlet_method(self, labels_encoded, Local_Nodes, alpha=Alpha,
+            SplitAsFederatedData.dirichlet_method(labels_encoded, Local_Nodes, alpha=Alpha,
                                                   random_state=self.random_state)
         # Calculate desired distance
         if self.distance == "jensen-shannon":
@@ -168,7 +168,7 @@ class InteractivePlots:
 
         # Get random Dirichlet distribution
         lbl_distro_clients_pctg, lbl_distro_clients_num, lbl_distro_clients_idx, num_per_node = \
-            SplitAsFederatedData.dirichlet_method(self, labels_encoded, Local_Nodes, alpha=Alpha,
+            SplitAsFederatedData.dirichlet_method(labels_encoded, Local_Nodes, alpha=Alpha,
                                                   random_state=self.random_state)
         # Calculate desired distance
         if self.distance == "jensen-shannon":
@@ -276,7 +276,7 @@ class InteractivePlots:
 
         # Get random Dirichlet distribution
         lbl_distro_clients_pctg, lbl_distro_clients_num, lbl_distro_clients_idx, num_per_node = \
-            SplitAsFederatedData.dirichlet_method(self, labels_encoded, Local_Nodes, alpha=Alpha,
+            SplitAsFederatedData.dirichlet_method(labels_encoded, Local_Nodes, alpha=Alpha,
                                                   random_state=self.random_state)
         # Calculate desired distance
         if self.distance == "jensen-shannon":
@@ -400,7 +400,7 @@ class InteractivePlots:
 
         # Get Percentage of NonIID method
         lbl_distro_clients_pctg, lbl_distro_clients_num, lbl_distro_clients_idx, num_per_node = \
-            SplitAsFederatedData.percent_noniid_method(self, labels_encoded, Local_Nodes, pct_noniid=Pctg_NonIID,
+            SplitAsFederatedData.percent_noniid_method(labels_encoded, Local_Nodes, pct_noniid=Pctg_NonIID,
                                                        random_state=self.random_state)
         # Calculate desired distance
         if self.distance == "jensen-shannon":
@@ -506,7 +506,7 @@ class InteractivePlots:
 
         # Get Percentage of NonIID method
         lbl_distro_clients_pctg, lbl_distro_clients_num, lbl_distro_clients_idx, num_per_node = \
-            SplitAsFederatedData.percent_noniid_method(self, labels_encoded, Local_Nodes, pct_noniid=Pctg_NonIID,
+            SplitAsFederatedData.percent_noniid_method(labels_encoded, Local_Nodes, pct_noniid=Pctg_NonIID,
                                                        random_state=self.random_state)
         # Calculate desired distance
         if self.distance == "jensen-shannon":
@@ -617,7 +617,7 @@ class InteractivePlots:
 
         # Get Percentage of NonIID method
         lbl_distro_clients_pctg, lbl_distro_clients_num, lbl_distro_clients_idx, num_per_node = \
-            SplitAsFederatedData.percent_noniid_method(self, labels_encoded, Local_Nodes, pct_noniid=Pctg_NonIID,
+            SplitAsFederatedData.percent_noniid_method(labels_encoded, Local_Nodes, pct_noniid=Pctg_NonIID,
                                                        random_state=self.random_state)
         # Calculate desired distance
         if self.distance == "jensen-shannon":

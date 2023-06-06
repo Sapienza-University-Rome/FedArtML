@@ -12,9 +12,9 @@ def normalize_value(value, min_val=0, max_val=1):
         ----------
         value : float
             Value to be normalized.
-        min_val : slider
+        min_val : float
             Minimum bound of normalization.
-        max_val : slider
+        max_val : float
             Maximum bound of normalization.
 
         Raises
@@ -195,6 +195,7 @@ def hellinger_distance(distributions):
     sqrt_d = np.sqrt(distributions)
     h = np.sum((sqrt_d[:, np.newaxis, :] - sqrt_d[np.newaxis, :, :]) ** 2, axis=2)
     hd_val = np.sqrt(np.sum(h) / (2 * n * (n - 1)))
+    hd_val = min(np.sqrt(hd_val), 1.0)
     return hd_val
 
 
@@ -235,5 +236,5 @@ def earth_movers_distance(D):
 
     # Calculate the average pairwise distance
     emd_val = np.mean(emd_distances[np.triu_indices(n, k=1)])
-
+    emd_val = min(np.sqrt(emd_val), 1.0)
     return emd_val
