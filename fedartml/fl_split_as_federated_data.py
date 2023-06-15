@@ -245,7 +245,7 @@ class SplitAsFederatedData:
             .. [1] (gaussian noise) Li, Q., Diao, Y., Chen, Q., & He, B. (2022, May). Federated learning on non-iid data silos: An experimental study. In 2022 IEEE 38th International Conference on Data Engineering (ICDE) (pp. 965-978). IEEE.
         """
 
-        noise_level = sigma / (local_nodes * (client_id + 1))
+        noise_level = sigma * (client_id + 1) / local_nodes
         np.random.seed(random_state)
         noise = np.random.normal(mu, noise_level, feat.shape)
         feat = feat + noise
@@ -391,6 +391,14 @@ class SplitAsFederatedData:
         pctg_distr = []
         dist_hist_no_completion = []
         dist_hist_with_completion = []
+
+        # Define bin range for histogram (from min and max values)
+        min_val = np.array(image_list).min()
+        max_val = np.array(image_list).max()
+
+        # At 4 deviations from the mean the data will keep almost at 100%
+        bins_range = np.linspace(min_val - 4*sigma_noise, max_val + 4*sigma_noise, num=bins, endpoint=True)
+
         for i in range(num_clients):
 
             X = data_df.iloc[lbl_distro_clients_idx[i], 0].values
@@ -405,7 +413,8 @@ class SplitAsFederatedData:
 
                 flattenX = np.concatenate([np.ravel(X[j]) for j in range(X.shape[0])])
 
-                histogram, bin_edges = self.create_histogram(flat_input=flattenX, bins=bins)
+                histogram, bin_edges = self.create_histogram(flat_input=flattenX, bins=bins_range)
+
             else:
                 histogram, bin_edges = np.zeros((bins,)), np.zeros((bins + 1,))
 
@@ -441,7 +450,7 @@ class SplitAsFederatedData:
 
                 flattenX = np.concatenate([np.ravel(X[j]) for j in range(X.shape[0])])
 
-                histogram, bin_edges = self.create_histogram(flat_input=flattenX, bins=bins)
+                histogram, bin_edges = self.create_histogram(flat_input=flattenX, bins=bins_range)
             else:
                 histogram, bin_edges = np.zeros((bins,)), np.zeros((bins + 1,))
 
@@ -493,7 +502,7 @@ class SplitAsFederatedData:
 
         distances['without_class_completion_feat'] = {'jensen-shannon': JS_dist_feat, 'hellinger': H_dist_feat,
                                                       'earth-movers': emd_dist_feat}
-
+        print(sigma_noise, H_dist_feat)
         # Calculate Jensen-Shannon distance for features (with completion)
         JS_dist_feat = jensen_shannon_distance(dist_hist_with_completion)
         # Calculate Hellinger distance for features (with completion)
