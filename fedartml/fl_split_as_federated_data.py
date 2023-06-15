@@ -245,7 +245,7 @@ class SplitAsFederatedData:
             .. [1] (gaussian noise) Li, Q., Diao, Y., Chen, Q., & He, B. (2022, May). Federated learning on non-iid data silos: An experimental study. In 2022 IEEE 38th International Conference on Data Engineering (ICDE) (pp. 965-978). IEEE.
         """
 
-        noise_level = sigma * (client_id + 1) / local_nodes
+        noise_level = sigma * client_id / local_nodes
         np.random.seed(random_state)
         noise = np.random.normal(mu, noise_level, feat.shape)
         feat = feat + noise
@@ -408,7 +408,7 @@ class SplitAsFederatedData:
                 X = np.array(X.tolist())
 
             if sigma_noise > 0:
-                X = self.add_gaussian_noise(feat=X, sigma=sigma_noise, client_id=i, local_nodes=num_clients,
+                X = self.add_gaussian_noise(feat=X, sigma=sigma_noise, client_id= i+1, local_nodes=num_clients,
                                             random_state=random_state_loop)
 
                 flattenX = np.concatenate([np.ravel(X[j]) for j in range(X.shape[0])])
@@ -445,7 +445,7 @@ class SplitAsFederatedData:
                 X = np.array(X.tolist())
 
             if sigma_noise > 0:
-                X = self.add_gaussian_noise(feat=X, sigma=sigma_noise, client_id=i, local_nodes=num_clients,
+                X = self.add_gaussian_noise(feat=X, sigma=sigma_noise, client_id=i+1, local_nodes=num_clients,
                                             random_state=random_state_loop)
 
                 flattenX = np.concatenate([np.ravel(X[j]) for j in range(X.shape[0])])
@@ -502,7 +502,7 @@ class SplitAsFederatedData:
 
         distances['without_class_completion_feat'] = {'jensen-shannon': JS_dist_feat, 'hellinger': H_dist_feat,
                                                       'earth-movers': emd_dist_feat}
-        print(sigma_noise, H_dist_feat)
+
         # Calculate Jensen-Shannon distance for features (with completion)
         JS_dist_feat = jensen_shannon_distance(dist_hist_with_completion)
         # Calculate Hellinger distance for features (with completion)
