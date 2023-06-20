@@ -419,6 +419,7 @@ class SplitAsFederatedData:
                 histogram, bin_edges = np.zeros((bins,)), np.zeros((bins + 1,))
 
             dist_hist_no_completion.append(list(histogram))
+            del histogram
             X = X.tolist()
             y = y.tolist()
 
@@ -455,7 +456,7 @@ class SplitAsFederatedData:
                 histogram, bin_edges = np.zeros((bins,)), np.zeros((bins + 1,))
 
             dist_hist_with_completion.append(list(histogram))
-
+            del histogram
             X = X.tolist()
             y = y.tolist()
 
