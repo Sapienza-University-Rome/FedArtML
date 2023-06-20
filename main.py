@@ -147,7 +147,7 @@ sigmas = [10**5]
 
 for sig in sigmas:
     clients_glob, list_ids_sampled, miss_class_per_node, distances = my_plot.create_clients(image_list=x_train_glob, label_list=y_train_glob_num,
-                                                                             num_clients=100, prefix_cli='Local_node',
-                                                                             method="dirichlet", alpha=1000, sigma_noise=sig, bins=10**7)
+                                                                             num_clients=4, prefix_cli='Local_node',
+                                                                             method="dirichlet", alpha=1000, sigma_noise=sig, bins=10**5)
 
 print(distances)

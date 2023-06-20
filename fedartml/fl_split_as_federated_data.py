@@ -419,6 +419,18 @@ class SplitAsFederatedData:
                 histogram, bin_edges = np.zeros((bins,)), np.zeros((bins + 1,))
 
             dist_hist_no_completion.append(list(histogram))
+
+            if i == (num_clients-1):
+
+                # Calculate Jensen-Shannon distance for features (no completion)
+                JS_dist_feat = jensen_shannon_distance(dist_hist_no_completion)
+                # Calculate Hellinger distance for features (no completion)
+                H_dist_feat = hellinger_distance(dist_hist_no_completion)
+                # Calculate Earth Mover’s distance for features (no completion)
+                emd_dist_feat = earth_movers_distance(dist_hist_no_completion)
+
+                del dist_hist_no_completion
+
             del histogram
             X = X.tolist()
             y = y.tolist()
@@ -428,7 +440,7 @@ class SplitAsFederatedData:
 
             shards_no_completion.append(list(zip(X, y)))
 
-            # Add missing classes when sampling (mainly for extre case percent iid = 100)
+            # Add missing classes when sampling (mainly for extreme case percent iid = 100)
             diff_classes = list(set(label_list) - set(lbl_distro_clients_num[i]))
             num_diff_classes = len(diff_classes)
             num_missing_classes.append(num_diff_classes)
@@ -493,13 +505,6 @@ class SplitAsFederatedData:
         emd_dist = earth_movers_distance(pctg_distr)
         distances['with_class_completion'] = {'jensen-shannon': JS_dist, 'hellinger': HD_dist,
                                               'earth-movers': emd_dist}
-
-        # Calculate Jensen-Shannon distance for features (no completion)
-        JS_dist_feat = jensen_shannon_distance(dist_hist_no_completion)
-        # Calculate Hellinger distance for features (no completion)
-        H_dist_feat = hellinger_distance(dist_hist_no_completion)
-        # Calculate Earth Mover’s distance for features (no completion)
-        emd_dist_feat = earth_movers_distance(dist_hist_no_completion)
 
         distances['without_class_completion_feat'] = {'jensen-shannon': JS_dist_feat, 'hellinger': H_dist_feat,
                                                       'earth-movers': emd_dist_feat}
