@@ -305,7 +305,7 @@ class SplitAsFederatedData:
         bins : int or str
             Number of bins used to create histogram of features to check feature skew. It can be the word 'n_samples' or the integer number of bins to use. If 'n_samples'(default) is selected, then it is set as the number values of the image_list (examples).
         idx_feat : int
-            Position of the feature (for images, the feature after flatten the image) to create histogram to check feature skew.
+            Position of the feature (for images, when reshaping the dimensions from three to one (row-column format)) to create histogram to check feature skew.
         Returns
         -------
         fed_data : dict
