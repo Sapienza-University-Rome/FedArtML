@@ -278,7 +278,7 @@ class SplitAsFederatedData:
         return histogram, bin_edges
 
     def create_clients(self, image_list, label_list, num_clients=4, prefix_cli='client', method="percent_noniid",
-                       alpha=1000, percent_noniid=0, sigma_noise=0, bins='optimal'):
+                       alpha=1000, percent_noniid=0, sigma_noise=0, bins='n_samples', idx_feat=0):
         """
         Create a federated dataset divided per each local node (client) using the desired method (percent_noniid or
         dirichlet). It works only for classification problems (labels as classes).
@@ -303,7 +303,9 @@ class SplitAsFederatedData:
         sigma_noise : float
             Noise (sigma parameter of Gaussian distro) to be added to the features.
         bins : int or str
-            Number of bins used to create histogram of features to check feature skew. It can be the word 'unique' or the integer number of bins to use. If 'unique'(default) is selected, then it is set as the number of unique values of the image_list.
+            Number of bins used to create histogram of features to check feature skew. It can be the word 'n_samples' or the integer number of bins to use. If 'n_samples'(default) is selected, then it is set as the number values of the image_list (examples).
+        idx_feat : int
+            Position of the feature (for images, the feature after flatten the image) to create histogram to check feature skew.
         Returns
         -------
         fed_data : dict
@@ -392,14 +394,19 @@ class SplitAsFederatedData:
         dist_hist_with_completion = []
 
         # Define number of bins for histogram
-        if bins == 'unique':
-            n_bins = np.unique(image_list).shape[0]
+        if bins == 'n_samples':
+            n_bins = np.array(image_list).shape[0]
         else:
             n_bins = bins
 
+        # Select feature desired
+        shape_x = np.array(np.array(image_list).shape)
+        feature_selected = np.array(image_list).reshape((shape_x[0], np.prod(shape_x[1:])))[:, idx_feat]
+
         # Define bin range for histogram (from min and max values)
-        min_val = np.array(image_list).min()
-        max_val = np.array(image_list).max()
+        min_val = feature_selected.min()
+        max_val = feature_selected.max()
+
         # At 4 deviations from the mean the data will keep almost at 100%
         bins_range = np.linspace(min_val - 4 * sigma_noise, max_val + 4 * sigma_noise, num=n_bins, endpoint=True)
 
@@ -415,9 +422,12 @@ class SplitAsFederatedData:
                 X = self.add_gaussian_noise(feat=X, sigma=sigma_noise, client_id=i + 1, local_nodes=num_clients,
                                             random_state=random_state_loop)
 
-                flattenX = np.concatenate([np.ravel(X[j]) for j in range(X.shape[0])])
+                # flattenX = np.concatenate([np.ravel(X[j]) for j in range(X.shape[0])])
+                # Select feature desired
+                shape_x = np.array(X.shape)
+                feature_selected = np.array(X.reshape((shape_x[0], np.prod(shape_x[1:])))[:, idx_feat].tolist())
 
-                histogram, bin_edges = self.create_histogram(flat_input=flattenX, bins=bins_range)
+                histogram, bin_edges = self.create_histogram(flat_input=feature_selected, bins=bins_range)
             else:
                 histogram, bin_edges = np.zeros((n_bins,)), np.zeros((n_bins + 1,))
 
@@ -463,9 +473,12 @@ class SplitAsFederatedData:
                 X = self.add_gaussian_noise(feat=X, sigma=sigma_noise, client_id=i + 1, local_nodes=num_clients,
                                             random_state=random_state_loop)
 
-                flattenX = np.concatenate([np.ravel(X[j]) for j in range(X.shape[0])])
+                # flattenX = np.concatenate([np.ravel(X[j]) for j in range(X.shape[0])])
+                # Select feature desired
+                shape_x = np.array(X.shape)
+                feature_selected = np.array(X.reshape((shape_x[0], np.prod(shape_x[1:])))[:, idx_feat].tolist())
 
-                histogram, bin_edges = self.create_histogram(flat_input=flattenX, bins=bins_range)
+                histogram, bin_edges = self.create_histogram(flat_input=feature_selected, bins=bins_range)
             else:
                 histogram, bin_edges = np.zeros((n_bins,)), np.zeros((n_bins + 1,))
 
@@ -488,7 +501,7 @@ class SplitAsFederatedData:
             shards_with_completion.append(list(zip(X, y)))
             if self.random_state is not None:
                 random_state_loop += self.random_state + 100
-
+        print(H_dist_feat)
         # Add elements to dictionary of federated data
         fed_data['with_class_completion'] = \
             {client_names[i]: shards_with_completion[i] for i in range(len(client_names))}
