@@ -501,7 +501,7 @@ class SplitAsFederatedData:
             shards_with_completion.append(list(zip(X, y)))
             if self.random_state is not None:
                 random_state_loop += self.random_state + 100
-        print(H_dist_feat)
+
         # Add elements to dictionary of federated data
         fed_data['with_class_completion'] = \
             {client_names[i]: shards_with_completion[i] for i in range(len(client_names))}
