@@ -48,14 +48,14 @@
 # # print(distances)
 # # print(miss_class_per_node)
 #
-# # sigmas = [10**1]
 # # sigmas = [10**1,10**2,10**3,10**4,10**5,10**6,10**7,10**8,10**9,10**10,10**11,10**12,10**13,10**14,10**15]
-# sigmas = [0.00001,0.0001, 0.001,0.01,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,10]
+# sigmas = [0,0.00001,0.0001, 0.001,0.01,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,10,10**1,10**2,10**3,10**4,10**5,10**6,10**7,10**8,10**9,10**10,10**11,10**12,10**13,10**14,10**15]
+# # sigmas = [10**1]
 #
 # for sig in sigmas:
 #     clients_glob, list_ids_sampled, miss_class_per_node, distances = my_plot.create_clients(image_list=my_x, label_list=my_labels,
 #                                                                              num_clients=4, prefix_cli='Local_node',
-#                                                                              method="dirichlet", alpha=1000, sigma_noise=sig, bins=10**5)
+#                                                                              method="dirichlet", alpha=1000, sigma_noise=sig, bins='unique')
 
 
 ######################################################################################################################
@@ -78,10 +78,10 @@
 # my_plot = SplitAsFederatedData(random_state=random_state)
 # # sigmas = [10**1]
 # # sigmas = [10**1,10**2,10**3,10**4,10**5,10**6,10**7,10**8,10**9,10**10,10**11,10**12,10**13,10**14,10**15]
-# sigmas = [0.00001,0.0001, 0.001,0.01,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,10,10**2,10**3,10**4,10**5,10**6,10**7,10**8,10**9,10**10,10**11,10**12,10**13,10**14,10**15]
+# # sigmas = [0, 0.00001,0.0001, 0.001,0.01,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,10,10**2,10**3,10**4,10**5,10**6,10**7,10**8,10**9,10**10,10**11,10**12,10**13,10**14,10**15]
 # #
 # # sigmas = [0.00001,0.003,0.1]
-# # sigmas = [0.1]
+# sigmas = [10**3]
 #
 # for sig in sigmas:
 #     clients_glob, list_ids_sampled, miss_class_per_node, distances = my_plot.create_clients(image_list=x_train, label_list=y_train,
@@ -148,6 +148,6 @@ sigmas = [10**5]
 for sig in sigmas:
     clients_glob, list_ids_sampled, miss_class_per_node, distances = my_plot.create_clients(image_list=x_train_glob, label_list=y_train_glob_num,
                                                                              num_clients=4, prefix_cli='Local_node',
-                                                                             method="dirichlet", alpha=1000, sigma_noise=sig, bins=10**5)
+                                                                             method="dirichlet", alpha=1000, sigma_noise=sig, bins='unique')
 
 print(distances)

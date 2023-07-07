@@ -4,7 +4,6 @@ import pandas as pd
 from numpy.random import dirichlet
 from fedartml.function_base import jensen_shannon_distance, hellinger_distance, earth_movers_distance
 
-
 class SplitAsFederatedData:
     """
     Creates federated data from the provided centralized data (features and labels) to exemplify identically and
@@ -279,7 +278,7 @@ class SplitAsFederatedData:
         return histogram, bin_edges
 
     def create_clients(self, image_list, label_list, num_clients=4, prefix_cli='client', method="percent_noniid",
-                       alpha=1000, percent_noniid=0, sigma_noise=0, bins=10 ** 5):
+                       alpha=1000, percent_noniid=0, sigma_noise=0, bins='optimal'):
         """
         Create a federated dataset divided per each local node (client) using the desired method (percent_noniid or
         dirichlet). It works only for classification problems (labels as classes).
@@ -303,8 +302,8 @@ class SplitAsFederatedData:
             Percentage (between o and 100) desired of non-IID-ness for the federated data.
         sigma_noise : float
             Noise (sigma parameter of Gaussian distro) to be added to the features.
-        bins : int
-            Number of bins used to create histogram of features to check feature skew.
+        bins : int or str
+            Number of bins used to create histogram of features to check feature skew. It can be the word 'unique' or the integer number of bins to use. If 'unique'(default) is selected, then it is set as the number of unique values of the image_list.
         Returns
         -------
         fed_data : dict
@@ -392,12 +391,17 @@ class SplitAsFederatedData:
         dist_hist_no_completion = []
         dist_hist_with_completion = []
 
+        # Define number of bins for histogram
+        if bins == 'unique':
+            n_bins = np.unique(image_list).shape[0]
+        else:
+            n_bins = bins
+
         # Define bin range for histogram (from min and max values)
         min_val = np.array(image_list).min()
         max_val = np.array(image_list).max()
-
         # At 4 deviations from the mean the data will keep almost at 100%
-        bins_range = np.linspace(min_val - 4*sigma_noise, max_val + 4*sigma_noise, num=bins, endpoint=True)
+        bins_range = np.linspace(min_val - 4 * sigma_noise, max_val + 4 * sigma_noise, num=n_bins, endpoint=True)
 
         for i in range(num_clients):
 
@@ -408,20 +412,18 @@ class SplitAsFederatedData:
                 X = np.array(X.tolist())
 
             if sigma_noise > 0:
-                X = self.add_gaussian_noise(feat=X, sigma=sigma_noise, client_id= i+1, local_nodes=num_clients,
+                X = self.add_gaussian_noise(feat=X, sigma=sigma_noise, client_id=i + 1, local_nodes=num_clients,
                                             random_state=random_state_loop)
 
                 flattenX = np.concatenate([np.ravel(X[j]) for j in range(X.shape[0])])
 
                 histogram, bin_edges = self.create_histogram(flat_input=flattenX, bins=bins_range)
-
             else:
-                histogram, bin_edges = np.zeros((bins,)), np.zeros((bins + 1,))
+                histogram, bin_edges = np.zeros((n_bins,)), np.zeros((n_bins + 1,))
 
             dist_hist_no_completion.append(list(histogram))
 
-            if i == (num_clients-1):
-
+            if i == (num_clients - 1):
                 # Calculate Jensen-Shannon distance for features (no completion)
                 JS_dist_feat = jensen_shannon_distance(dist_hist_no_completion)
                 # Calculate Hellinger distance for features (no completion)
@@ -458,14 +460,14 @@ class SplitAsFederatedData:
                 X = np.array(X.tolist())
 
             if sigma_noise > 0:
-                X = self.add_gaussian_noise(feat=X, sigma=sigma_noise, client_id=i+1, local_nodes=num_clients,
+                X = self.add_gaussian_noise(feat=X, sigma=sigma_noise, client_id=i + 1, local_nodes=num_clients,
                                             random_state=random_state_loop)
 
                 flattenX = np.concatenate([np.ravel(X[j]) for j in range(X.shape[0])])
 
                 histogram, bin_edges = self.create_histogram(flat_input=flattenX, bins=bins_range)
             else:
-                histogram, bin_edges = np.zeros((bins,)), np.zeros((bins + 1,))
+                histogram, bin_edges = np.zeros((n_bins,)), np.zeros((n_bins + 1,))
 
             dist_hist_with_completion.append(list(histogram))
             del histogram
