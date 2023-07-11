@@ -454,8 +454,7 @@ class SplitAsFederatedData:
 
             if i == (num_clients - 1):
                 # Reshape to make calculations per client
-                dist_hist_no_completion = list(np.transpose(np.array(dist_hist_no_completion), (1, 0, 2)))
-
+                dist_hist_no_completion = np.transpose(np.array(dist_hist_no_completion), (1, 0, 2)).tolist()
                 dists = np.array(list(map(jensen_shannon_distance, dist_hist_no_completion)))
                 JS_dist_feat = np.mean(dists)
                 dists = np.array(list(map(hellinger_distance, dist_hist_no_completion)))
@@ -528,7 +527,7 @@ class SplitAsFederatedData:
                 random_state_loop += self.random_state + 100
 
         # Reshape to make calculations per client
-        dist_hist_with_completion = list(np.transpose(np.array(dist_hist_with_completion), (1, 0, 2)))
+        dist_hist_with_completion = np.transpose(np.array(dist_hist_with_completion), (1, 0, 2)).tolist()
 
         # Add elements to dictionary of federated data
         fed_data['with_class_completion'] = \
