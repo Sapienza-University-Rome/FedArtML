@@ -316,8 +316,8 @@ class SplitAsFederatedData:
             Noise (sigma parameter of Gaussian distro) to be added to the features.
         bins : int or str
             Number of bins used to create histogram of features to check feature skew. It can be the word 'n_samples' or the integer number of bins to use. If 'n_samples'(default) is selected, then it is set as the number values of the image_list (examples).
-        idx_feat : int
-            Position of the feature (for images, when reshaping the dimensions from three to one (row-column format)) to create histogram to check feature skew.
+        feat_sample_rate : float
+            Proportion (between 0 and 1) to be sampled from features. This parameter is useful when dealing with datasets with many features (i.e. images).
         Returns
         -------
         fed_data : dict
@@ -411,11 +411,9 @@ class SplitAsFederatedData:
         else:
             n_bins = bins
 
-
         shape_x = np.array(np.array(image_list).shape)
 
         # Select randomly some features for measuring feature skew
-
         feat_sample_size = np.int(feat_sample_rate * np.prod(shape_x[1:]))
         np.random.seed(self.random_state)
         idx_samp_feat = np.random.choice(np.arange(np.prod(shape_x[1:])), size=feat_sample_size, replace=False)
@@ -424,7 +422,6 @@ class SplitAsFederatedData:
         # Calculate bins_range with noise
         bins_range = np.apply_along_axis(self.calculate_bins_range, axis=0, arr=features, sigma_noise=sigma_noise,
                                          n_bins=n_bins)
-        # del features
 
         for i in range(num_clients):
 
@@ -440,7 +437,7 @@ class SplitAsFederatedData:
                 X = np.array(X.tolist())
 
                 # flattenX = np.concatenate([np.ravel(X[j]) for j in range(X.shape[0])])
-                # Select feature desired
+                # Select randomly some features for measuring feature skew
                 shape_x = np.array(X.shape)
                 features = X.reshape((shape_x[0], np.prod(shape_x[1:])))[:, idx_samp_feat]
 
@@ -467,8 +464,6 @@ class SplitAsFederatedData:
                 emd_dist_feat = np.mean(dists)
 
                 del dist_hist_no_completion
-
-            # X = X.reshape(shape_x)
 
             X = X.tolist()
             y = y.tolist()
@@ -500,7 +495,7 @@ class SplitAsFederatedData:
                                             random_state=random_state_loop)
                 X = np.array(X.tolist())
                 # flattenX = np.concatenate([np.ravel(X[j]) for j in range(X.shape[0])])
-                # Select feature desired
+                # Select randomly some features for measuring feature skew
                 shape_x = np.array(X.shape)
                 features = X.reshape((shape_x[0], np.prod(shape_x[1:])))[:, idx_samp_feat]
 
@@ -513,8 +508,6 @@ class SplitAsFederatedData:
 
             dist_hist_with_completion.append(list(histograms))
             del histograms
-
-            # X = X.reshape(shape_x)
 
             X = X.tolist()
             y = y.tolist()
