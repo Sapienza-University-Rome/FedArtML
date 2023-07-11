@@ -86,7 +86,7 @@
 # for sig in sigmas:
 #     clients_glob, list_ids_sampled, miss_class_per_node, distances = my_plot.create_clients(image_list=x_train, label_list=y_train,
 #                                                                              num_clients=6, prefix_cli='Local_node',
-#                                                                              method="dirichlet", alpha=1000, sigma_noise=sig, bins='n_samples')
+#                                                                              method="dirichlet", alpha=1000, sigma_noise=sig, bins='n_samples',feat_sample_rate=0.1)
 # print(distances)
 # print(miss_class_per_node)
 
@@ -141,14 +141,102 @@ y_test_glob_num = pd.Series([v for d in y_test_glob for k, v in name_labels_dic.
 # print(pd.DataFrame(x_train_glob).describe())
 my_plot = SplitAsFederatedData(random_state=random_state)
 # my_plot = SplitAsFederatedData()
-# sigmas = [0, 0.000001, 0.00001,0.0001, 0.001,0.01,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,10,10**2,10**3,10**4,10**5,10**6,10**7,10**8,10**9,10**10,10**11,10**12,10**13,10**14,10**15]
+sigmas = [0, 0.000001, 0.00001,0.0001, 0.001,0.01,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,10,10**2,10**3,10**4,10**5,10**6,10**7,10**8,10**9,10**10,10**11,10**12,10**13,10**14,10**15]
 # sigmas = [10**3.8,10**4.02,10**4.15,10**5]
-sigmas = [0, 9**-6, 10**-3, 20**-1, 10**3]
+# sigmas = [0, 9**-6, 10**-3, 20**-1, 10**3]
 # sigmas = [10**3]
 
 for sig in sigmas:
     clients_glob, list_ids_sampled, miss_class_per_node, distances = my_plot.create_clients(image_list=x_train_glob, label_list=y_train_glob_num,
                                                                              num_clients=6, prefix_cli='Local_node',
-                                                                             method="dirichlet", alpha=1000, sigma_noise=sig, bins='n_samples')
+                                                                             method="dirichlet", alpha=1000, sigma_noise=sig, bins='n_samples', feat_sample_rate=0.1)
 
 print(distances['without_class_completion_feat']['hellinger'])
+
+
+
+
+
+
+
+
+# import numpy as np
+#
+# # Example 2D array of features
+# feature_selected = np.array([[1, 2, 3],
+#                              [4, 5, 6],
+#                              [7, 8, 9]])
+#
+# # Example array of bin limits for each feature column
+# bins_range = np.array([[0, 2, 4, 6],
+#                        [1, 3, 5, 7],
+#                        [2, 4, 6, 8]])
+#
+# # Function to calculate histograms for each column within custom bin limits
+# def calculate_histograms(column, bins):
+#     hist, _ = np.histogram(column, bins=bins)
+#     return hist
+#
+# # Calculate histograms for each column
+# histograms = np.apply_along_axis(calculate_histograms, axis=0, arr=feature_selected, bins=bins_range[0])
+#
+# # Iterate over remaining columns
+# for i in range(1, feature_selected.shape[1]):
+#
+#     histogram = np.apply_along_axis(calculate_histograms, axis=0, arr=feature_selected, bins=bins_range[i])
+#
+#     histograms = np.vstack((histograms, histogram))
+#
+# print(histograms)
+
+
+
+# import numpy as np
+#
+# # p = 120 / 3
+# # n_bins = 5
+# # Example 2D array of features
+# feature_selected = np.array([[1, 2, 3, 4, 5],
+#                              [4, 5, 6, 7, 8],
+#                              [7, 8, 9, 10, 11]])
+#
+# # Example array of bin limits for each feature column
+# bins_range = np.array([[0, 2, 4, 6, 8, 12],
+#                        [0, 2, 4, 6, 8, 12],
+#                        [0, 2, 4, 6, 8, 12]])
+#
+# # Function to calculate histograms for each column within custom bin limits
+# def calculate_histogram(column, bins):
+#     hist, _ = np.histogram(column, bins=bins)
+#     return hist
+#
+# # Calculate histograms for each column using list comprehension
+# histograms = np.array([calculate_histogram(column, bins) for column, bins in zip(feature_selected, bins_range)])
+#
+# print(histograms)
+
+
+
+
+#
+# import numpy as np
+# from scipy.spatial.distance import jensenshannon
+#
+# # Example array of distributions
+# distributions = np.random.rand(720, 10)
+#
+# # Reshape the array into blocks of 6 rows
+# block_size = 6
+# num_blocks = distributions.shape[0] // block_size
+# distributions_reshaped = distributions[:num_blocks * block_size].reshape(num_blocks, block_size, -1)
+#
+# print(distributions_reshaped.shape)
+# # Calculate Jensen-Shannon distance for each block using broadcasting
+# first_distribution = distributions_reshaped[:, 0]
+# remaining_distributions = distributions_reshaped[:, 1:]
+# block_distances = jensenshannon(first_distribution[:, np.newaxis], remaining_distributions, axis=2)
+#
+# # Convert the distances to a list
+# distances_list = block_distances.tolist()
+#
+# print(distances_list)

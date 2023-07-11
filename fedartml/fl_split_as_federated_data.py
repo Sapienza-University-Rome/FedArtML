@@ -4,6 +4,7 @@ import pandas as pd
 from numpy.random import dirichlet
 from fedartml.function_base import jensen_shannon_distance, hellinger_distance, earth_movers_distance
 
+
 class SplitAsFederatedData:
     """
     Creates federated data from the provided centralized data (features and labels) to exemplify identically and
@@ -251,6 +252,16 @@ class SplitAsFederatedData:
         return feat
 
     @staticmethod
+    def calculate_bins_range(column, sigma_noise, n_bins):
+        min_val = column.min()
+        max_val = column.max()
+        # At 4 deviations from the mean the data will keep almost at 100%
+        bins_range = np.array(
+            np.linspace(min_val - 4 * sigma_noise, max_val + 4 * sigma_noise, num=n_bins, endpoint=True))
+
+        return bins_range
+
+    @staticmethod
     def create_histogram(flat_input, bins):
         """
         Create histogram and bins from given flatted features.
@@ -275,10 +286,11 @@ class SplitAsFederatedData:
         """
         histogram, bin_edges = np.histogram(flat_input, bins=bins)
         histogram = histogram / flat_input.shape[0]
-        return histogram, bin_edges
+
+        return histogram
 
     def create_clients(self, image_list, label_list, num_clients=4, prefix_cli='client', method="percent_noniid",
-                       alpha=1000, percent_noniid=0, sigma_noise=0, bins='n_samples', idx_feat=0):
+                       alpha=1000, percent_noniid=0, sigma_noise=0, bins='n_samples', feat_sample_rate=1):
         """
         Create a federated dataset divided per each local node (client) using the desired method (percent_noniid or
         dirichlet). It works only for classification problems (labels as classes).
@@ -399,16 +411,20 @@ class SplitAsFederatedData:
         else:
             n_bins = bins
 
-        # Select feature desired
+
         shape_x = np.array(np.array(image_list).shape)
-        feature_selected = np.array(image_list).reshape((shape_x[0], np.prod(shape_x[1:])))[:, idx_feat]
 
-        # Define bin range for histogram (from min and max values)
-        min_val = feature_selected.min()
-        max_val = feature_selected.max()
+        # Select randomly some features for measuring feature skew
 
-        # At 4 deviations from the mean the data will keep almost at 100%
-        bins_range = np.linspace(min_val - 4 * sigma_noise, max_val + 4 * sigma_noise, num=n_bins, endpoint=True)
+        feat_sample_size = np.int(feat_sample_rate * np.prod(shape_x[1:]))
+        np.random.seed(self.random_state)
+        idx_samp_feat = np.random.choice(np.arange(np.prod(shape_x[1:])), size=feat_sample_size, replace=False)
+        features = np.array(image_list).reshape((shape_x[0], np.prod(shape_x[1:])))[:, idx_samp_feat]
+
+        # Calculate bins_range with noise
+        bins_range = np.apply_along_axis(self.calculate_bins_range, axis=0, arr=features, sigma_noise=sigma_noise,
+                                         n_bins=n_bins)
+        # del features
 
         for i in range(num_clients):
 
@@ -421,29 +437,39 @@ class SplitAsFederatedData:
             if sigma_noise > 0:
                 X = self.add_gaussian_noise(feat=X, sigma=sigma_noise, client_id=i + 1, local_nodes=num_clients,
                                             random_state=random_state_loop)
+                X = np.array(X.tolist())
 
                 # flattenX = np.concatenate([np.ravel(X[j]) for j in range(X.shape[0])])
                 # Select feature desired
                 shape_x = np.array(X.shape)
-                feature_selected = np.array(X.reshape((shape_x[0], np.prod(shape_x[1:])))[:, idx_feat].tolist())
+                features = X.reshape((shape_x[0], np.prod(shape_x[1:])))[:, idx_samp_feat]
 
-                histogram, bin_edges = self.create_histogram(flat_input=feature_selected, bins=bins_range)
+                # Calculate histograms for each column
+                histograms = np.array([self.create_histogram(column, bins) for column, bins in zip(features.T,
+                                                                                                   bins_range.T)])
+                del features
             else:
-                histogram, bin_edges = np.zeros((n_bins,)), np.zeros((n_bins + 1,))
+                histograms = np.zeros((features.shape[1], n_bins))
 
-            dist_hist_no_completion.append(list(histogram))
+            dist_hist_no_completion.append(list(histograms))
+
+            del histograms
 
             if i == (num_clients - 1):
-                # Calculate Jensen-Shannon distance for features (no completion)
-                JS_dist_feat = jensen_shannon_distance(dist_hist_no_completion)
-                # Calculate Hellinger distance for features (no completion)
-                H_dist_feat = hellinger_distance(dist_hist_no_completion)
-                # Calculate Earth Mover’s distance for features (no completion)
-                emd_dist_feat = earth_movers_distance(dist_hist_no_completion)
+                # Reshape to make calculations per client
+                dist_hist_no_completion = list(np.transpose(np.array(dist_hist_no_completion), (1, 0, 2)))
+
+                dists = np.array(list(map(jensen_shannon_distance, dist_hist_no_completion)))
+                JS_dist_feat = np.mean(dists)
+                dists = np.array(list(map(hellinger_distance, dist_hist_no_completion)))
+                H_dist_feat = np.mean(dists)
+                dists = np.array(list(map(earth_movers_distance, dist_hist_no_completion)))
+                emd_dist_feat = np.mean(dists)
 
                 del dist_hist_no_completion
 
-            del histogram
+            # X = X.reshape(shape_x)
+
             X = X.tolist()
             y = y.tolist()
 
@@ -472,18 +498,24 @@ class SplitAsFederatedData:
             if sigma_noise > 0:
                 X = self.add_gaussian_noise(feat=X, sigma=sigma_noise, client_id=i + 1, local_nodes=num_clients,
                                             random_state=random_state_loop)
-
+                X = np.array(X.tolist())
                 # flattenX = np.concatenate([np.ravel(X[j]) for j in range(X.shape[0])])
                 # Select feature desired
                 shape_x = np.array(X.shape)
-                feature_selected = np.array(X.reshape((shape_x[0], np.prod(shape_x[1:])))[:, idx_feat].tolist())
+                features = X.reshape((shape_x[0], np.prod(shape_x[1:])))[:, idx_samp_feat]
 
-                histogram, bin_edges = self.create_histogram(flat_input=feature_selected, bins=bins_range)
+                # Calculate histograms for each column
+                histograms = np.array([self.create_histogram(column, bins) for column, bins in zip(features.T,
+                                                                                                   bins_range.T)])
+                del features
             else:
-                histogram, bin_edges = np.zeros((n_bins,)), np.zeros((n_bins + 1,))
+                histograms = np.zeros((features.shape[1], n_bins))
 
-            dist_hist_with_completion.append(list(histogram))
-            del histogram
+            dist_hist_with_completion.append(list(histograms))
+            del histograms
+
+            # X = X.reshape(shape_x)
+
             X = X.tolist()
             y = y.tolist()
 
@@ -501,6 +533,9 @@ class SplitAsFederatedData:
             shards_with_completion.append(list(zip(X, y)))
             if self.random_state is not None:
                 random_state_loop += self.random_state + 100
+
+        # Reshape to make calculations per client
+        dist_hist_with_completion = list(np.transpose(np.array(dist_hist_with_completion), (1, 0, 2)))
 
         # Add elements to dictionary of federated data
         fed_data['with_class_completion'] = \
@@ -524,12 +559,12 @@ class SplitAsFederatedData:
         distances['without_class_completion_feat'] = {'jensen-shannon': JS_dist_feat, 'hellinger': H_dist_feat,
                                                       'earth-movers': emd_dist_feat}
 
-        # Calculate Jensen-Shannon distance for features (with completion)
-        JS_dist_feat = jensen_shannon_distance(dist_hist_with_completion)
-        # Calculate Hellinger distance for features (with completion)
-        H_dist_feat = hellinger_distance(dist_hist_with_completion)
-        # Calculate Earth Mover’s distance for features (with completion)
-        emd_dist_feat = earth_movers_distance(dist_hist_with_completion)
+        dists = np.array(list(map(jensen_shannon_distance, dist_hist_with_completion)))
+        JS_dist_feat = np.mean(dists)
+        dists = np.array(list(map(hellinger_distance, dist_hist_with_completion)))
+        H_dist_feat = np.mean(dists)
+        dists = np.array(list(map(earth_movers_distance, dist_hist_with_completion)))
+        emd_dist_feat = np.mean(dists)
 
         distances['with_class_completion_feat'] = {'jensen-shannon': JS_dist_feat, 'hellinger': H_dist_feat,
                                                    'earth-movers': emd_dist_feat}
