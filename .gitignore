@@ -134,4 +134,4 @@ dmypy.json
 #---------------------Added------------------------
 *.ipynb
 data/
-main.py
+not_run.py
