@@ -290,10 +290,12 @@ class SplitAsFederatedData:
         return histogram
 
     def create_clients(self, image_list, label_list, num_clients=4, prefix_cli='client', method="percent_noniid",
-                       alpha=1000, percent_noniid=0, sigma_noise=0, bins='n_samples', feat_sample_rate=1):
+                       alpha=1000, percent_noniid=0, sigma_noise=0, bins='n_samples', feat_sample_rate=1,
+                       feat_skew_method="gaussian-noise", alpha_feat_split=1000, idx_feat='feat-mean',
+                       feat_quantile=20):
         """
         Create a federated dataset divided per each local node (client) using the desired method (percent_noniid or
-        dirichlet). It works only for classification problems (labels as classes).
+        dirichlet). It works only for classification problems (labels as classes) with quantitaive (numeric) features.
 
         Parameters
         ----------
@@ -303,21 +305,30 @@ class SplitAsFederatedData:
             The target values (class labels in classification) from the centralized data.
         num_clients : int
             Number of local nodes (clients) used in the federated learning paradigm.
-        prefix_cli : string
+        prefix_cli : str
             The clients' name prefix, e.g., client_1, client_2, etc.
         method : string
-            Method to create the federated data. Possible options: "percent_noniid"(default) or "dirichlet"
+            Method to create the federated data based on label skew. Possible options: "percent_noniid"(default), "dirichlet", "no-label-skew"
         alpha : float
             Concentration parameter of the Dirichlet distribution defining the desired degree of non-IID-ness for
-            the federated data.
+            the labels of the federated data.
         percent_noniid : float
-            Percentage (between o and 100) desired of non-IID-ness for the federated data.
+            Percentage (between o and 100) desired of non-IID-ness for the labels of the federated data.
         sigma_noise : float
-            Noise (sigma parameter of Gaussian distro) to be added to the features.
+            Noise (sigma parameter of Gaussian distro) to be added to the features. Applicable only for feat_skew_method="gaussian-noise".
         bins : int or str
-            Number of bins used to create histogram of features to check feature skew. It can be the word 'n_samples' or the integer number of bins to use. If 'n_samples'(default) is selected, then it is set as the number values of the image_list (examples).
+            Number of bins used to create histogram of features to check feature skew. It can be the word 'n_samples' or the integer number of bins to use. If 'n_samples'(default) is selected, then it is set as the number values of the image_list (examples). Applicable only for feat_skew_method="gaussian-noise".
         feat_sample_rate : float
-            Proportion (between 0 and 1) to be sampled from features. This parameter is useful when dealing with datasets with many features (i.e. images).
+            Proportion (between 0 and 1) to be sampled from features. This parameter is useful when dealing with datasets with many features (i.e. images). Applicable only for feat_skew_method="gaussian-noise".
+        feat_skew_method : str
+            Method to create the federated data based on feature skew. Possible options: "gaussian-noise"(default), "feature-split"
+        alpha_feat_split : float
+            Concentration parameter of the Dirichlet distribution defining the desired degree of non-IID-ness for
+            the features of the federated data. Applicable only for feat_skew_method="feature-split".
+        idx_feat : int or str
+            Position (idx) of feature used to simulate feature skew. It can be the word 'feat-mean' or the integer number of the position to use. If 'feat-mean'(default) is selected, then the mean of all the features is computed as representative of the features. Applicable only for feat_skew_method="feature-split".
+        feat_quantile : int
+            Number quantiles to use in the feature skew simulation. 20 for ventiles, 10 for deciles, 4 for quartiles, etc. Applicable only for feat_skew_method="feature-split".
         Returns
         -------
         fed_data : dict
@@ -330,7 +341,7 @@ class SplitAsFederatedData:
             Distances calculated while measuring heterogeneity (non-IID-ness) of the label's distribution among clients. Includes "with_class_completion" and "without_class_completion" cases.
 
         Note: When creating federated data and setting heterogeneous distributions (i.e. high values of percent_noniid or small values of alpha), it is more likely the clients hold examples from only one class.
-        Then, two cases (for labels and featires) are returned as output for fed_data and distances:
+        Then, two cases (for labels and features) are returned as output for fed_data and distances:
             - "with_class_completion": In this case, the clients are completed with one (random) example of each missing class for each client to have all the label's classes.
             - "without_class_completion": In this case, the clients are NOT completed with one (random) example of each missing class. Consequently, summing the number of examples of each client results in the same number of total examples (number of rows in image_list).
 
@@ -364,201 +375,361 @@ class SplitAsFederatedData:
         # Zip the data as list
         data = list(zip(image_list, label_list))
 
-        num_missing_classes = []
-        # Set list to append labels and features for each client
-        shards_no_completion = []
-        shards_with_completion = []
+        if (method == "percent_noniid" or method == "dirichlet") and feat_skew_method == "feature-split":
+            raise ValueError(
+                "The feature-split method can't be used simultaneously with dirichlet nor percent_noniid label skew methods. If you intent to use feature-split use method == 'no-label-skew'")
+        elif feat_skew_method == "gaussian-noise":
+            num_missing_classes = []
+            # Set list to append labels and features for each client
+            shards_no_completion = []
+            shards_with_completion = []
 
-        random_state_loop = self.random_state
+            random_state_loop = self.random_state
 
-        # List to append the position of the recordings extracted
-        ids_list_no_completion = []
-        ids_list_with_completion = []
+            # List to append the position of the recordings extracted
+            ids_list_no_completion = []
+            ids_list_with_completion = []
 
-        if method == "dirichlet":
-            lbl_distro_clients_pctg, lbl_distro_clients_num, lbl_distro_clients_idx, num_per_node = \
-                self.dirichlet_method(labels=label_list, local_nodes=num_clients, alpha=alpha,
+            if method == "dirichlet":
+                lbl_distro_clients_pctg, lbl_distro_clients_num, lbl_distro_clients_idx, num_per_node = \
+                    self.dirichlet_method(labels=label_list, local_nodes=num_clients, alpha=alpha,
+                                          random_state=random_state_loop)
+            elif method == "percent_noniid":
+                lbl_distro_clients_pctg, lbl_distro_clients_num, lbl_distro_clients_idx, num_per_node = \
+                    self.percent_noniid_method(labels=label_list, local_nodes=num_clients, pct_noniid=percent_noniid,
+                                               random_state=random_state_loop)
+            else:
+                raise ValueError("Method '" + method +
+                                 "' not implemented. Available label skew methods are: ['percent_noniid', "
+                                 "'dirichlet', 'no-label-skew']")
+            # Calculate Jensen-Shannon distance
+            JS_dist = jensen_shannon_distance(lbl_distro_clients_pctg)
+            # Calculate Hellinger distance
+            H_dist = hellinger_distance(lbl_distro_clients_pctg)
+            # Calculate Earth Mover’s distance
+            emd_dist = earth_movers_distance(lbl_distro_clients_pctg)
+
+            distances = {'without_class_completion': {'jensen-shannon': JS_dist, 'hellinger': H_dist,
+                                                      'earth-movers': emd_dist}}
+
+            data_df = pd.DataFrame(data)
+            data_df.columns = [*data_df.columns[:-1], 'class']
+
+            fed_data = {}
+            ids_list_fed_data = {}
+            pctg_distr = []
+            dist_hist_no_completion = []
+            dist_hist_with_completion = []
+
+            # Define number of bins for histogram
+            if bins == 'n_samples':
+                n_bins = np.array(image_list).shape[0]
+            else:
+                n_bins = bins
+
+            shape_x = np.array(np.array(image_list).shape)
+
+            # Select randomly some features for measuring feature skew
+            feat_sample_size = np.int(feat_sample_rate * np.prod(shape_x[1:]))
+            np.random.seed(self.random_state)
+            idx_samp_feat = np.random.choice(np.arange(np.prod(shape_x[1:])), size=feat_sample_size, replace=False)
+            features = np.array(image_list).reshape((shape_x[0], np.prod(shape_x[1:])))[:, idx_samp_feat]
+
+            # Calculate bins_range with noise
+            bins_range = np.apply_along_axis(self.calculate_bins_range, axis=0, arr=features, sigma_noise=sigma_noise,
+                                             n_bins=n_bins)
+
+            for i in range(num_clients):
+
+                X = data_df.iloc[lbl_distro_clients_idx[i], 0].values
+                y = data_df.iloc[lbl_distro_clients_idx[i], 1].values
+
+                if isinstance(X[0], list):
+                    X = np.array(X.tolist())
+
+                if sigma_noise > 0:
+                    X = self.add_gaussian_noise(feat=X, sigma=sigma_noise, client_id=i + 1, local_nodes=num_clients,
+                                                random_state=random_state_loop)
+                    X = np.array(X.tolist())
+
+                    # flattenX = np.concatenate([np.ravel(X[j]) for j in range(X.shape[0])])
+                    # Select randomly some features for measuring feature skew
+                    shape_x = np.array(X.shape)
+                    features = X.reshape((shape_x[0], np.prod(shape_x[1:])))[:, idx_samp_feat]
+
+                    # Calculate histograms for each column
+                    histograms = np.array([self.create_histogram(column, bins) for column, bins in zip(features.T,
+                                                                                                       bins_range.T)])
+                    del features
+                else:
+                    histograms = np.zeros((features.shape[1], 20))
+
+                dist_hist_no_completion.append(list(histograms))
+
+                del histograms
+
+                if i == (num_clients - 1):
+                    # Reshape to make calculations per client
+                    dist_hist_no_completion = np.transpose(np.array(dist_hist_no_completion), (1, 0, 2)).tolist()
+                    dists = np.array(list(map(jensen_shannon_distance, dist_hist_no_completion)))
+                    JS_dist_feat = np.mean(dists)
+                    dists = np.array(list(map(hellinger_distance, dist_hist_no_completion)))
+                    H_dist_feat = np.mean(dists)
+                    dists = np.array(list(map(earth_movers_distance, dist_hist_no_completion)))
+                    emd_dist_feat = np.mean(dists)
+
+                    del dist_hist_no_completion
+
+                X = X.tolist()
+                y = y.tolist()
+
+                # Get the index (name) of the recordings sampled
+                ids_list_no_completion.append(lbl_distro_clients_idx[i])
+
+                shards_no_completion.append(list(zip(X, y)))
+
+                # Add missing classes when sampling (mainly for extreme case percent iid = 100)
+                diff_classes = list(set(label_list) - set(lbl_distro_clients_num[i]))
+                num_diff_classes = len(diff_classes)
+                num_missing_classes.append(num_diff_classes)
+
+                if num_diff_classes > 0:
+                    for k in diff_classes:
+                        vals = [idx for idx, y in enumerate(label_list) if y == k][0]
+
+                        lbl_distro_clients_idx[i] = lbl_distro_clients_idx[i] + [vals]
+
+                X = data_df.iloc[lbl_distro_clients_idx[i], 0].values
+                y = data_df.iloc[lbl_distro_clients_idx[i], 1].values
+
+                if isinstance(X[0], list):
+                    X = np.array(X.tolist())
+
+                if sigma_noise > 0:
+                    X = self.add_gaussian_noise(feat=X, sigma=sigma_noise, client_id=i + 1, local_nodes=num_clients,
+                                                random_state=random_state_loop)
+                    X = np.array(X.tolist())
+                    # flattenX = np.concatenate([np.ravel(X[j]) for j in range(X.shape[0])])
+                    # Select randomly some features for measuring feature skew
+                    shape_x = np.array(X.shape)
+                    features = X.reshape((shape_x[0], np.prod(shape_x[1:])))[:, idx_samp_feat]
+
+                    # Calculate histograms for each column
+                    histograms = np.array([self.create_histogram(column, bins) for column, bins in zip(features.T,
+                                                                                                       bins_range.T)])
+                    del features
+                else:
+                    histograms = np.zeros((features.shape[1], 20))
+
+                dist_hist_with_completion.append(list(histograms))
+                del histograms
+
+                X = X.tolist()
+                y = y.tolist()
+
+                # Get distribution of labels
+                df_aux = pd.DataFrame(y, columns=['label']).label.value_counts().reset_index()
+                df_node = pd.DataFrame(np.unique(y), columns=['index'])
+                df_node = df_node.merge(df_aux, how='left', left_on='index', right_on='index').replace(np.nan, 0)
+                df_node['perc'] = df_node.label / sum(df_node.label)
+
+                pctg_distr.append(list(df_node.perc))
+
+                # Get the index (name) of the recordings sampled
+                ids_list_with_completion.append(lbl_distro_clients_idx[i])
+
+                shards_with_completion.append(list(zip(X, y)))
+                if self.random_state is not None:
+                    random_state_loop += self.random_state + 100
+
+            # Reshape to make calculations per client
+            dist_hist_with_completion = np.transpose(np.array(dist_hist_with_completion), (1, 0, 2)).tolist()
+
+            # Add elements to dictionary of federated data
+            fed_data['with_class_completion'] = \
+                {client_names[i]: shards_with_completion[i] for i in range(len(client_names))}
+            fed_data['without_class_completion'] = \
+                {client_names[i]: shards_no_completion[i] for i in range(len(client_names))}
+
+            # Add elements to dictionary of ids list of federated data
+            ids_list_fed_data['with_class_completion'] = ids_list_with_completion
+            ids_list_fed_data['without_class_completion'] = ids_list_no_completion
+
+            # Calculate Jensen-Shannon distance for labels
+            JS_dist = jensen_shannon_distance(pctg_distr)
+            # Calculate Hellinger distance for labels
+            HD_dist = hellinger_distance(pctg_distr)
+            # Calculate Earth Mover’s distance for labels
+            emd_dist = earth_movers_distance(pctg_distr)
+            distances['with_class_completion'] = {'jensen-shannon': JS_dist, 'hellinger': HD_dist,
+                                                  'earth-movers': emd_dist}
+
+            distances['without_class_completion_feat'] = {'jensen-shannon': JS_dist_feat, 'hellinger': H_dist_feat,
+                                                          'earth-movers': emd_dist_feat}
+
+            dists = np.array(list(map(jensen_shannon_distance, dist_hist_with_completion)))
+            JS_dist_feat = np.mean(dists)
+            dists = np.array(list(map(hellinger_distance, dist_hist_with_completion)))
+            H_dist_feat = np.mean(dists)
+            dists = np.array(list(map(earth_movers_distance, dist_hist_with_completion)))
+            emd_dist_feat = np.mean(dists)
+
+            distances['with_class_completion_feat'] = {'jensen-shannon': JS_dist_feat, 'hellinger': H_dist_feat,
+                                                       'earth-movers': emd_dist_feat}
+
+        elif feat_skew_method == "feature-split":
+            num_missing_classes = []
+            # Set list to append labels and features for each client
+            shards_no_completion = []
+            shards_with_completion = []
+
+            random_state_loop = self.random_state
+
+            # List to append the position of the recordings extracted
+            ids_list_no_completion = []
+            ids_list_with_completion = []
+
+            shape_x = np.array(np.array(image_list).shape)
+
+            # Define feature selected
+            if idx_feat == 'feat-mean':
+                feature_selected = np.mean(np.array(image_list).reshape((shape_x[0], np.prod(shape_x[1:]))), axis=1)
+            else:
+                feature_selected = np.array(image_list).reshape((shape_x[0], np.prod(shape_x[1:])))[:, idx_feat]
+            # Get ventiles from feature selected
+            feature_selected = pd.DataFrame(feature_selected, columns=['feature_selected'])
+            feature_selected = pd.qcut(feature_selected['feature_selected'], feat_quantile, labels=False,
+                                       duplicates='drop')
+
+            feat_distro_clients_pctg, feat_distro_clients_num, feat_distro_clients_idx, num_per_node = \
+                self.dirichlet_method(labels=feature_selected, local_nodes=num_clients, alpha=alpha_feat_split,
                                       random_state=random_state_loop)
-        elif method == "percent_noniid":
-            lbl_distro_clients_pctg, lbl_distro_clients_num, lbl_distro_clients_idx, num_per_node = \
-                self.percent_noniid_method(labels=label_list, local_nodes=num_clients, pct_noniid=percent_noniid,
-                                           random_state=random_state_loop)
+
+            data_df = pd.DataFrame(data)
+            data_df.columns = [*data_df.columns[:-1], 'class']
+
+            fed_data = {}
+            ids_list_fed_data = {}
+            pctg_distr_no_completion = []
+            pctg_distr_with_completion = []
+            feat_pctg_distr_with_completion = []
+
+            for i in range(num_clients):
+
+                X = data_df.iloc[feat_distro_clients_idx[i], 0].values
+                y = data_df.iloc[feat_distro_clients_idx[i], 1].values
+
+                if isinstance(X[0], list):
+                    X = np.array(X.tolist())
+
+                X = X.tolist()
+                y = y.tolist()
+
+                # Get the index (name) of the recordings sampled
+                ids_list_no_completion.append(feat_distro_clients_idx[i])
+
+                shards_no_completion.append(list(zip(X, y)))
+
+                # Get distribution of labels
+                df_aux = pd.DataFrame(y, columns=['label']).label.value_counts().reset_index()
+                df_node = pd.DataFrame(np.unique(label_list), columns=['index'])
+                df_node = df_node.merge(df_aux, how='left', left_on='index', right_on='index').replace(np.nan, 0)
+                df_node['perc'] = df_node.label / sum(df_node.label)
+
+                pctg_distr_no_completion.append(list(df_node.perc))
+
+                # Add missing classes when sampling (mainly for extreme case percent iid = 100)
+                diff_classes = list(set(label_list) - set(y))
+                num_diff_classes = len(diff_classes)
+                num_missing_classes.append(num_diff_classes)
+
+                if num_diff_classes > 0:
+                    for k in diff_classes:
+                        vals = [idx for idx, y in enumerate(label_list) if y == k][0]
+
+                        feat_distro_clients_idx[i] = feat_distro_clients_idx[i] + [vals]
+
+                X = data_df.iloc[feat_distro_clients_idx[i], 0].values
+                y = data_df.iloc[feat_distro_clients_idx[i], 1].values
+
+                if isinstance(X[0], list):
+                    X = np.array(X.tolist())
+
+                X = X.tolist()
+                y = y.tolist()
+
+                # Get distribution of labels
+                df_aux = pd.DataFrame(y, columns=['label']).label.value_counts().reset_index()
+                df_node = pd.DataFrame(np.unique(label_list), columns=['index'])
+                df_node = df_node.merge(df_aux, how='left', left_on='index', right_on='index').replace(np.nan, 0)
+                df_node['perc'] = df_node.label / sum(df_node.label)
+
+                pctg_distr_with_completion.append(list(df_node.perc))
+
+                # Get distribution of feature
+                df_aux = pd.DataFrame(feature_selected.values[feat_distro_clients_idx[i]],
+                                      columns=['feature']).feature.value_counts().reset_index()
+                df_node = pd.DataFrame(np.unique(feature_selected), columns=['index'])
+                df_node = df_node.merge(df_aux, how='left', left_on='index', right_on='index').replace(np.nan, 0)
+                df_node['perc'] = df_node.feature / sum(df_node.feature)
+
+                feat_pctg_distr_with_completion.append(list(df_node.perc))
+
+                # Get the index (name) of the recordings sampled
+                ids_list_with_completion.append(feat_distro_clients_idx[i])
+
+                shards_with_completion.append(list(zip(X, y)))
+                if self.random_state is not None:
+                    random_state_loop += self.random_state + 100
+
+            # Add elements to dictionary of federated data
+            fed_data['with_class_completion'] = \
+                {client_names[i]: shards_with_completion[i] for i in range(len(client_names))}
+            fed_data['without_class_completion'] = \
+                {client_names[i]: shards_no_completion[i] for i in range(len(client_names))}
+
+            # Add elements to dictionary of ids list of federated data
+            ids_list_fed_data['with_class_completion'] = ids_list_with_completion
+            ids_list_fed_data['without_class_completion'] = ids_list_no_completion
+
+            # Calculate Jensen-Shannon distance for labels (no completion)
+            JS_dist = jensen_shannon_distance(pctg_distr_no_completion)
+            # Calculate Hellinger distance for labels
+            HD_dist = hellinger_distance(pctg_distr_no_completion)
+            # Calculate Earth Mover’s distance for labels
+            emd_dist = earth_movers_distance(pctg_distr_no_completion)
+            distances = {'without_class_completion': {'jensen-shannon': JS_dist, 'hellinger': HD_dist,
+                                                      'earth-movers': emd_dist}}
+
+            # Calculate Jensen-Shannon distance for labels (with class completion)
+            JS_dist = jensen_shannon_distance(pctg_distr_with_completion)
+            # Calculate Hellinger distance for labels
+            HD_dist = hellinger_distance(pctg_distr_with_completion)
+            # Calculate Earth Mover’s distance for labels
+            emd_dist = earth_movers_distance(pctg_distr_with_completion)
+            distances['with_class_completion'] = {'jensen-shannon': JS_dist, 'hellinger': HD_dist,
+                                                  'earth-movers': emd_dist}
+
+            # Calculate Jensen-Shannon distance for features
+            JS_dist_feat = jensen_shannon_distance(feat_distro_clients_pctg)
+            # Calculate Hellinger distance for labels
+            HD_dist_feat = hellinger_distance(feat_distro_clients_pctg)
+            # Calculate Earth Mover’s distance for labels
+            emd_dist_feat = earth_movers_distance(feat_distro_clients_pctg)
+
+            distances['without_class_completion_feat'] = {'jensen-shannon': JS_dist_feat, 'hellinger': HD_dist_feat,
+                                                          'earth-movers': emd_dist_feat}
+            # Calculate Jensen-Shannon distance for features
+            JS_dist_feat = jensen_shannon_distance(feat_pctg_distr_with_completion)
+            # Calculate Hellinger distance for labels
+            HD_dist_feat = hellinger_distance(feat_pctg_distr_with_completion)
+            # Calculate Earth Mover’s distance for labels
+            emd_dist_feat = earth_movers_distance(feat_pctg_distr_with_completion)
+
+            distances['with_class_completion_feat'] = {'jensen-shannon': JS_dist_feat, 'hellinger': HD_dist_feat,
+                                                       'earth-movers': emd_dist_feat}
         else:
-            raise ValueError("Method '" + method + "' not implemented. Available methods are: ['percent_noniid', "
-                                                   "'dirichlet']")
-        # Calculate Jensen-Shannon distance
-        JS_dist = jensen_shannon_distance(lbl_distro_clients_pctg)
-        # Calculate Hellinger distance
-        H_dist = hellinger_distance(lbl_distro_clients_pctg)
-        # Calculate Earth Mover’s distance
-        emd_dist = earth_movers_distance(lbl_distro_clients_pctg)
-
-        distances = {'without_class_completion': {'jensen-shannon': JS_dist, 'hellinger': H_dist,
-                                                  'earth-movers': emd_dist}}
-
-        data_df = pd.DataFrame(data)
-        data_df.columns = [*data_df.columns[:-1], 'class']
-
-        fed_data = {}
-        ids_list_fed_data = {}
-        pctg_distr = []
-        dist_hist_no_completion = []
-        dist_hist_with_completion = []
-
-        # Define number of bins for histogram
-        if bins == 'n_samples':
-            n_bins = np.array(image_list).shape[0]
-        else:
-            n_bins = bins
-
-        shape_x = np.array(np.array(image_list).shape)
-
-        # Select randomly some features for measuring feature skew
-        feat_sample_size = np.int(feat_sample_rate * np.prod(shape_x[1:]))
-        np.random.seed(self.random_state)
-        idx_samp_feat = np.random.choice(np.arange(np.prod(shape_x[1:])), size=feat_sample_size, replace=False)
-        features = np.array(image_list).reshape((shape_x[0], np.prod(shape_x[1:])))[:, idx_samp_feat]
-
-        # Calculate bins_range with noise
-        bins_range = np.apply_along_axis(self.calculate_bins_range, axis=0, arr=features, sigma_noise=sigma_noise,
-                                         n_bins=n_bins)
-
-        for i in range(num_clients):
-
-            X = data_df.iloc[lbl_distro_clients_idx[i], 0].values
-            y = data_df.iloc[lbl_distro_clients_idx[i], 1].values
-
-            if isinstance(X[0], list):
-                X = np.array(X.tolist())
-
-            if sigma_noise > 0:
-                X = self.add_gaussian_noise(feat=X, sigma=sigma_noise, client_id=i + 1, local_nodes=num_clients,
-                                            random_state=random_state_loop)
-                X = np.array(X.tolist())
-
-                # flattenX = np.concatenate([np.ravel(X[j]) for j in range(X.shape[0])])
-                # Select randomly some features for measuring feature skew
-                shape_x = np.array(X.shape)
-                features = X.reshape((shape_x[0], np.prod(shape_x[1:])))[:, idx_samp_feat]
-
-                # Calculate histograms for each column
-                histograms = np.array([self.create_histogram(column, bins) for column, bins in zip(features.T,
-                                                                                                   bins_range.T)])
-                del features
-            else:
-                histograms = np.zeros((features.shape[1], n_bins))
-
-            dist_hist_no_completion.append(list(histograms))
-
-            del histograms
-
-            if i == (num_clients - 1):
-                # Reshape to make calculations per client
-                dist_hist_no_completion = np.transpose(np.array(dist_hist_no_completion), (1, 0, 2)).tolist()
-                dists = np.array(list(map(jensen_shannon_distance, dist_hist_no_completion)))
-                JS_dist_feat = np.mean(dists)
-                dists = np.array(list(map(hellinger_distance, dist_hist_no_completion)))
-                H_dist_feat = np.mean(dists)
-                dists = np.array(list(map(earth_movers_distance, dist_hist_no_completion)))
-                emd_dist_feat = np.mean(dists)
-
-                del dist_hist_no_completion
-
-            X = X.tolist()
-            y = y.tolist()
-
-            # Get the index (name) of the recordings sampled
-            ids_list_no_completion.append(lbl_distro_clients_idx[i])
-
-            shards_no_completion.append(list(zip(X, y)))
-
-            # Add missing classes when sampling (mainly for extreme case percent iid = 100)
-            diff_classes = list(set(label_list) - set(lbl_distro_clients_num[i]))
-            num_diff_classes = len(diff_classes)
-            num_missing_classes.append(num_diff_classes)
-
-            if num_diff_classes > 0:
-                for k in diff_classes:
-                    vals = [idx for idx, y in enumerate(label_list) if y == k][0]
-
-                    lbl_distro_clients_idx[i] = lbl_distro_clients_idx[i] + [vals]
-
-            X = data_df.iloc[lbl_distro_clients_idx[i], 0].values
-            y = data_df.iloc[lbl_distro_clients_idx[i], 1].values
-
-            if isinstance(X[0], list):
-                X = np.array(X.tolist())
-
-            if sigma_noise > 0:
-                X = self.add_gaussian_noise(feat=X, sigma=sigma_noise, client_id=i + 1, local_nodes=num_clients,
-                                            random_state=random_state_loop)
-                X = np.array(X.tolist())
-                # flattenX = np.concatenate([np.ravel(X[j]) for j in range(X.shape[0])])
-                # Select randomly some features for measuring feature skew
-                shape_x = np.array(X.shape)
-                features = X.reshape((shape_x[0], np.prod(shape_x[1:])))[:, idx_samp_feat]
-
-                # Calculate histograms for each column
-                histograms = np.array([self.create_histogram(column, bins) for column, bins in zip(features.T,
-                                                                                                   bins_range.T)])
-                del features
-            else:
-                histograms = np.zeros((features.shape[1], n_bins))
-
-            dist_hist_with_completion.append(list(histograms))
-            del histograms
-
-            X = X.tolist()
-            y = y.tolist()
-
-            # Get distribution of labels
-            df_aux = pd.DataFrame(y, columns=['label']).label.value_counts().reset_index()
-            df_node = pd.DataFrame(np.unique(y), columns=['index'])
-            df_node = df_node.merge(df_aux, how='left', left_on='index', right_on='index').replace(np.nan, 0)
-            df_node['perc'] = df_node.label / sum(df_node.label)
-
-            pctg_distr.append(list(df_node.perc))
-
-            # Get the index (name) of the recordings sampled
-            ids_list_with_completion.append(lbl_distro_clients_idx[i])
-
-            shards_with_completion.append(list(zip(X, y)))
-            if self.random_state is not None:
-                random_state_loop += self.random_state + 100
-
-        # Reshape to make calculations per client
-        dist_hist_with_completion = np.transpose(np.array(dist_hist_with_completion), (1, 0, 2)).tolist()
-
-        # Add elements to dictionary of federated data
-        fed_data['with_class_completion'] = \
-            {client_names[i]: shards_with_completion[i] for i in range(len(client_names))}
-        fed_data['without_class_completion'] = \
-            {client_names[i]: shards_no_completion[i] for i in range(len(client_names))}
-
-        # Add elements to dictionary of ids list of federated data
-        ids_list_fed_data['with_class_completion'] = ids_list_with_completion
-        ids_list_fed_data['without_class_completion'] = ids_list_no_completion
-
-        # Calculate Jensen-Shannon distance for labels
-        JS_dist = jensen_shannon_distance(pctg_distr)
-        # Calculate Hellinger distance for labels
-        HD_dist = hellinger_distance(pctg_distr)
-        # Calculate Earth Mover’s distance for labels
-        emd_dist = earth_movers_distance(pctg_distr)
-        distances['with_class_completion'] = {'jensen-shannon': JS_dist, 'hellinger': HD_dist,
-                                              'earth-movers': emd_dist}
-
-        distances['without_class_completion_feat'] = {'jensen-shannon': JS_dist_feat, 'hellinger': H_dist_feat,
-                                                      'earth-movers': emd_dist_feat}
-
-        dists = np.array(list(map(jensen_shannon_distance, dist_hist_with_completion)))
-        JS_dist_feat = np.mean(dists)
-        dists = np.array(list(map(hellinger_distance, dist_hist_with_completion)))
-        H_dist_feat = np.mean(dists)
-        dists = np.array(list(map(earth_movers_distance, dist_hist_with_completion)))
-        emd_dist_feat = np.mean(dists)
-
-        distances['with_class_completion_feat'] = {'jensen-shannon': JS_dist_feat, 'hellinger': H_dist_feat,
-                                                   'earth-movers': emd_dist_feat}
-
+            raise ValueError("Method '" + feat_skew_method +
+                             "' not implemented. Available feature skew methods are: ['gaussian-noise', "
+                             "'feature-split']")
         return fed_data, ids_list_fed_data, num_missing_classes, distances
