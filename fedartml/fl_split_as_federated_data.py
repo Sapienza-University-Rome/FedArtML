@@ -289,10 +289,91 @@ class SplitAsFederatedData:
 
         return histogram
 
+    @staticmethod
+    def dirichlet_method_quant_skew(labels, local_nodes, alpha=1000, random_state=None):
+        """
+        Create a federated dataset divided per each local node (client) using the Dirichlet (dirichlet) method to evaluate quantity skew.
+
+        Parameters
+        ----------
+        labels : array-like
+            The target values (class labels in classification).
+        local_nodes : int
+            Number of local nodes (clients) used in the federated learning paradigm.
+        alpha : float
+            Concentration parameter of the Dirichlet distribution defining the desired degree of non-IID-ness for
+            the federated data.
+        random_state : int
+            Controls the shuffling applied to the generation of pseudorandom numbers. Pass an int for reproducible
+            output across multiple function calls.
+
+        Returns
+        -------
+        pctg_distr : array-like
+            Percentage (between 0 and 1) distribution of the classes for each local node (client).
+        num_distr : array-like
+            Numbers of distribution of the classes for each local node (client).
+        idx_distr : array-like
+            Indexes of examples (partition) taken for each local node (client).
+        num_per_node : array-like
+            Number of examples per each local node (client).
+
+        References
+        ----------
+            .. [1] (dirichlet) Tao Lin∗, Lingjing Kong∗, Sebastian U. Stich, Martin Jaggi. (2020). Ensemble Distillation for Robust Model Fusion in Federated Learning
+                https://proceedings.neurips.cc/paper/2020/file/18df51b97ccd68128e994804f3eccc87-Supplemental.pdf
+        """
+        # https://github.com/Xtra-Computing/NIID-Bench/blob/main/partition.py
+        # https://github.com/IBM/probabilistic-federated-neural-matching/blob/master/experiment.py
+        labels = np.array(labels)
+
+        min_size = 0
+
+        N = labels.shape[0]
+        random_state_loop = random_state
+
+        np.random.seed(random_state_loop)
+        idxs = np.random.permutation(N)
+
+        while min_size < 10:
+            proportions = np.random.dirichlet(np.repeat(alpha, local_nodes))
+            proportions = proportions / proportions.sum()
+            min_size = np.min(proportions * len(idxs))
+
+        proportions = (np.cumsum(proportions) * len(idxs)).astype(int)[:-1]
+        idx_batch = np.split(idxs, proportions)
+
+        pctg_distr = []
+        num_distr = []
+        idx_distr = []
+        num_per_node = []
+
+        random_state_loop = random_state
+        for j in range(local_nodes):
+            np.random.seed(random_state_loop)
+            np.random.shuffle(idx_batch[j])
+
+            # Get examples for each batch from labels
+            aux_examples_node = labels[idx_batch[j]]
+            # Get distribution of labels
+            df_aux = pd.DataFrame(aux_examples_node, columns=['label']).label.value_counts().reset_index()
+            df_node = pd.DataFrame(np.unique(labels), columns=['index'])
+            df_node = df_node.merge(df_aux, how='left', left_on='index', right_on='index').replace(np.nan, 0)
+            num_per_node.append(list(df_node.label))
+            df_node['perc'] = df_node.label / sum(df_node.label)
+
+            pctg_distr.append(list(df_node.perc))
+            num_distr.append(aux_examples_node)
+            idx_distr.append(idx_batch[j])
+            if random_state is not None:
+                random_state_loop += 100
+
+        return pctg_distr, num_distr, idx_distr, num_per_node
+
     def create_clients(self, image_list, label_list, num_clients=4, prefix_cli='client', method="percent_noniid",
                        alpha=1000, percent_noniid=0, sigma_noise=0, bins='n_samples', feat_sample_rate=1,
                        feat_skew_method="gaussian-noise", alpha_feat_split=1000, idx_feat='feat-mean',
-                       feat_quantile=20):
+                       feat_quantile=20, quant_skew_method="no-quant-skew", alpha_quant_split=1000):
         """
         Create a federated dataset divided per each local node (client) using the desired method (percent_noniid or
         dirichlet). It works only for classification problems (labels as classes) with quantitaive (numeric) features.
@@ -328,7 +409,12 @@ class SplitAsFederatedData:
         idx_feat : int or str
             Position (idx) of feature used to simulate feature skew. It can be the word 'feat-mean' or the integer number of the position to use. If 'feat-mean'(default) is selected, then the mean of all the features is computed as representative of the features. Applicable only for feat_skew_method="feature-split".
         feat_quantile : int
-            Number quantiles to use in the feature skew simulation. 20 for ventiles, 10 for deciles, 4 for quartiles, etc. Applicable only for feat_skew_method="feature-split".
+            Number quantiles to use in the feature skew simulation. 20 for ventiles (default), 10 for deciles, 4 for quartiles, etc. Applicable only for feat_skew_method="feature-split".
+        quant_skew_method : str
+            Method to create the federated data based on quantity skew. Possible options: "no-quant-skew"(default), "dirichlet"
+        alpha_quant_split : float
+            Concentration parameter of the Dirichlet distribution defining the desired degree of non-IID-ness for
+            the quantity skew of the federated data. Applicable only for quant_skew_method="dirichlet".
         Returns
         -------
         fed_data : dict
@@ -378,6 +464,12 @@ class SplitAsFederatedData:
         if (method == "percent_noniid" or method == "dirichlet") and feat_skew_method == "feature-split":
             raise ValueError(
                 "The feature-split method can't be used simultaneously with dirichlet nor percent_noniid label skew methods. If you intent to use feature-split use method == 'no-label-skew'")
+        elif (quant_skew_method == "dirichlet") and feat_skew_method == "feature-split":
+            raise ValueError(
+                "The feature-split method can't be used simultaneously with dirichlet quantity skew methods. If you intent to use feature-split use quant_skew_method == 'no-quant-skew'")
+        if (method == "percent_noniid" or method == "dirichlet") and quant_skew_method == "dirichlet":
+            raise ValueError(
+                "The dirichlet (for quantity skew) method can't be used simultaneously with dirichlet nor percent_noniid label skew methods. If you intent to use dirichlet (for quantity skew) use method == 'no-label-skew'")
         elif feat_skew_method == "gaussian-noise":
             num_missing_classes = []
             # Set list to append labels and features for each client
@@ -398,6 +490,10 @@ class SplitAsFederatedData:
                 lbl_distro_clients_pctg, lbl_distro_clients_num, lbl_distro_clients_idx, num_per_node = \
                     self.percent_noniid_method(labels=label_list, local_nodes=num_clients, pct_noniid=percent_noniid,
                                                random_state=random_state_loop)
+            elif quant_skew_method == "dirichlet":
+                lbl_distro_clients_pctg, lbl_distro_clients_num, lbl_distro_clients_idx, num_per_node = \
+                    self.dirichlet_method_quant_skew(labels=label_list, local_nodes=num_clients,
+                                                     alpha=alpha_quant_split, random_state=random_state_loop)
             else:
                 raise ValueError("Method '" + method +
                                  "' not implemented. Available label skew methods are: ['percent_noniid', "
@@ -529,7 +625,7 @@ class SplitAsFederatedData:
 
                 # Get distribution of labels
                 df_aux = pd.DataFrame(y, columns=['label']).label.value_counts().reset_index()
-                df_node = pd.DataFrame(np.unique(y), columns=['index'])
+                df_node = pd.DataFrame(np.unique(label_list), columns=['index'])
                 df_node = df_node.merge(df_aux, how='left', left_on='index', right_on='index').replace(np.nan, 0)
                 df_node['perc'] = df_node.label / sum(df_node.label)
 
@@ -694,36 +790,36 @@ class SplitAsFederatedData:
 
             # Calculate Jensen-Shannon distance for labels (no completion)
             JS_dist = jensen_shannon_distance(pctg_distr_no_completion)
-            # Calculate Hellinger distance for labels
+            # Calculate Hellinger distance for labels (no completion)
             HD_dist = hellinger_distance(pctg_distr_no_completion)
-            # Calculate Earth Mover’s distance for labels
+            # Calculate Earth Mover’s distance for labels (no completion)
             emd_dist = earth_movers_distance(pctg_distr_no_completion)
             distances = {'without_class_completion': {'jensen-shannon': JS_dist, 'hellinger': HD_dist,
                                                       'earth-movers': emd_dist}}
 
             # Calculate Jensen-Shannon distance for labels (with class completion)
             JS_dist = jensen_shannon_distance(pctg_distr_with_completion)
-            # Calculate Hellinger distance for labels
+            # Calculate Hellinger distance for labels (with class completion)
             HD_dist = hellinger_distance(pctg_distr_with_completion)
-            # Calculate Earth Mover’s distance for labels
+            # Calculate Earth Mover’s distance for labels (with class completion)
             emd_dist = earth_movers_distance(pctg_distr_with_completion)
             distances['with_class_completion'] = {'jensen-shannon': JS_dist, 'hellinger': HD_dist,
                                                   'earth-movers': emd_dist}
 
-            # Calculate Jensen-Shannon distance for features
+            # Calculate Jensen-Shannon distance for features (no completion)
             JS_dist_feat = jensen_shannon_distance(feat_distro_clients_pctg)
-            # Calculate Hellinger distance for labels
+            # Calculate Hellinger distance for features (no completion)
             HD_dist_feat = hellinger_distance(feat_distro_clients_pctg)
-            # Calculate Earth Mover’s distance for labels
+            # Calculate Earth Mover’s distance for features (no completion)
             emd_dist_feat = earth_movers_distance(feat_distro_clients_pctg)
 
             distances['without_class_completion_feat'] = {'jensen-shannon': JS_dist_feat, 'hellinger': HD_dist_feat,
                                                           'earth-movers': emd_dist_feat}
-            # Calculate Jensen-Shannon distance for features
+            # Calculate Jensen-Shannon distance for features (with class completion)
             JS_dist_feat = jensen_shannon_distance(feat_pctg_distr_with_completion)
-            # Calculate Hellinger distance for labels
+            # Calculate Hellinger distance for features (with class completion)
             HD_dist_feat = hellinger_distance(feat_pctg_distr_with_completion)
-            # Calculate Earth Mover’s distance for labels
+            # Calculate Earth Mover’s distance for features (with class completion)
             emd_dist_feat = earth_movers_distance(feat_pctg_distr_with_completion)
 
             distances['with_class_completion_feat'] = {'jensen-shannon': JS_dist_feat, 'hellinger': HD_dist_feat,
@@ -732,4 +828,33 @@ class SplitAsFederatedData:
             raise ValueError("Method '" + feat_skew_method +
                              "' not implemented. Available feature skew methods are: ['gaussian-noise', "
                              "'feature-split']")
+
+        # Get sizes of each client
+        sizes = [len(value) for key, value in fed_data['without_class_completion'].items()]
+        perc_part_cli = [[elm / sum(sizes)] for elm in sizes]
+
+        # Calculate Jensen-Shannon distance for quantity (no completion)
+        JS_dist_quant = jensen_shannon_distance(perc_part_cli)
+        # Calculate Hellinger distance for quantity (no completion)
+        HD_dist_quant = hellinger_distance(perc_part_cli)
+        # Calculate Earth Mover’s distance for quantity (no completion)
+        emd_dist_quant = earth_movers_distance(perc_part_cli)
+
+        distances['without_class_completion_quant'] = {'jensen-shannon': JS_dist_quant, 'hellinger': HD_dist_quant,
+                                                      'earth-movers': emd_dist_quant}
+
+        # Get sizes of each client
+        sizes = [len(value) for key, value in fed_data['with_class_completion'].items()]
+        perc_part_cli = [[elm / sum(sizes)] for elm in sizes]
+
+        # Calculate Jensen-Shannon distance for quantity (with class completion)
+        JS_dist_quant = jensen_shannon_distance(perc_part_cli)
+        # Calculate Hellinger distance for quantity (with class completion)
+        HD_dist_quant = hellinger_distance(perc_part_cli)
+        # Calculate Earth Mover’s distance for quantity (with class completion)
+        emd_dist_quant = earth_movers_distance(perc_part_cli)
+
+        distances['with_class_completion_quant'] = {'jensen-shannon': JS_dist_quant, 'hellinger': HD_dist_quant,
+                                                      'earth-movers': emd_dist_quant}
+
         return fed_data, ids_list_fed_data, num_missing_classes, distances
