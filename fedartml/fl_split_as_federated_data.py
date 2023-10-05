@@ -839,7 +839,7 @@ class SplitAsFederatedData:
         JS_dist_quant = jensen_shannon_distance(perc_part_cli)
         # Calculate Hellinger distance for quantity (no completion)
         HD_dist_quant = hellinger_distance(perc_part_cli)
-        print(HD_dist_quant)
+
         # Calculate Earth Mover’s distance for quantity (no completion)
         emd_dist_quant = earth_movers_distance(perc_part_cli)
 
