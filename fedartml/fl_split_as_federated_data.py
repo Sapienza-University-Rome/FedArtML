@@ -343,6 +343,8 @@ class SplitAsFederatedData:
         proportions = (np.cumsum(proportions) * len(idxs)).astype(int)[:-1]
         idx_batch = np.split(idxs, proportions)
 
+        idx_batch = [list(value) for value in idx_batch]
+
         pctg_distr = []
         num_distr = []
         idx_distr = []
@@ -367,7 +369,7 @@ class SplitAsFederatedData:
             idx_distr.append(idx_batch[j])
             if random_state is not None:
                 random_state_loop += 100
-
+        idx_distr
         return pctg_distr, num_distr, idx_distr, num_per_node
 
     def create_clients(self, image_list, label_list, num_clients=4, prefix_cli='client', method="percent_noniid",
@@ -402,14 +404,14 @@ class SplitAsFederatedData:
         feat_sample_rate : float
             Proportion (between 0 and 1) to be sampled from features. This parameter is useful when dealing with datasets with many features (i.e. images). Applicable only for feat_skew_method="gaussian-noise".
         feat_skew_method : str
-            Method to create the federated data based on feature skew. Possible options: "gaussian-noise"(default), "feature-split"
+            Method to create the federated data based on feature skew. Possible options: "gaussian-noise"(default), "hist-dirichlet"
         alpha_feat_split : float
             Concentration parameter of the Dirichlet distribution defining the desired degree of non-IID-ness for
-            the features of the federated data. Applicable only for feat_skew_method="feature-split".
+            the features of the federated data. Applicable only for feat_skew_method="hist-dirichlet".
         idx_feat : int or str
-            Position (idx) of feature used to simulate feature skew. It can be the word 'feat-mean' or the integer number of the position to use. If 'feat-mean'(default) is selected, then the mean of all the features is computed as representative of the features. Applicable only for feat_skew_method="feature-split".
+            Position (idx) of feature used to simulate feature skew. It can be the word 'feat-mean' or the integer number of the position to use. If 'feat-mean'(default) is selected, then the mean of all the features is computed as representative of the features. Applicable only for feat_skew_method="hist-dirichlet".
         feat_quantile : int
-            Number quantiles to use in the feature skew simulation. 20 for ventiles (default), 10 for deciles, 4 for quartiles, etc. Applicable only for feat_skew_method="feature-split".
+            Number quantiles to use in the feature skew simulation. 20 for ventiles (default), 10 for deciles, 4 for quartiles, etc. Applicable only for feat_skew_method="hist-dirichlet".
         quant_skew_method : str
             Method to create the federated data based on quantity skew. Possible options: "no-quant-skew"(default), "dirichlet"
         alpha_quant_split : float
@@ -461,12 +463,12 @@ class SplitAsFederatedData:
         # Zip the data as list
         data = list(zip(image_list, label_list))
 
-        if (method == "percent_noniid" or method == "dirichlet") and feat_skew_method == "feature-split":
+        if (method == "percent_noniid" or method == "dirichlet") and feat_skew_method == "hist-dirichlet":
             raise ValueError(
-                "The feature-split method can't be used simultaneously with dirichlet nor percent_noniid label skew methods. If you intent to use feature-split use method == 'no-label-skew'")
-        elif (quant_skew_method == "dirichlet") and feat_skew_method == "feature-split":
+                "The hist-dirichlet method can't be used simultaneously with dirichlet nor percent_noniid label skew methods. If you intent to use hist-dirichlet use method == 'no-label-skew'")
+        elif (quant_skew_method == "dirichlet") and feat_skew_method == "hist-dirichlet":
             raise ValueError(
-                "The feature-split method can't be used simultaneously with dirichlet quantity skew methods. If you intent to use feature-split use quant_skew_method == 'no-quant-skew'")
+                "The hist-dirichlet method can't be used simultaneously with dirichlet quantity skew methods. If you intent to use hist-dirichlet use quant_skew_method == 'no-quant-skew'")
         if (method == "percent_noniid" or method == "dirichlet") and quant_skew_method == "dirichlet":
             raise ValueError(
                 "The dirichlet (for quantity skew) method can't be used simultaneously with dirichlet nor percent_noniid label skew methods. If you intent to use dirichlet (for quantity skew) use method == 'no-label-skew'")
@@ -585,14 +587,14 @@ class SplitAsFederatedData:
                 shards_no_completion.append(list(zip(X, y)))
 
                 # Add missing classes when sampling (mainly for extreme case percent iid = 100)
-                diff_classes = list(set(label_list) - set(lbl_distro_clients_num[i]))
+                # diff_classes = list(set(label_list) - set(lbl_distro_clients_num[i]))
+                diff_classes = list(set(label_list) - set(y))
                 num_diff_classes = len(diff_classes)
                 num_missing_classes.append(num_diff_classes)
 
                 if num_diff_classes > 0:
                     for k in diff_classes:
                         vals = [idx for idx, y in enumerate(label_list) if y == k][0]
-
                         lbl_distro_clients_idx[i] = lbl_distro_clients_idx[i] + [vals]
 
                 X = data_df.iloc[lbl_distro_clients_idx[i], 0].values
@@ -673,7 +675,7 @@ class SplitAsFederatedData:
             distances['with_class_completion_feat'] = {'jensen-shannon': JS_dist_feat, 'hellinger': H_dist_feat,
                                                        'earth-movers': emd_dist_feat}
 
-        elif feat_skew_method == "feature-split":
+        elif feat_skew_method == "hist-dirichlet":
             num_missing_classes = []
             # Set list to append labels and features for each client
             shards_no_completion = []
@@ -827,7 +829,7 @@ class SplitAsFederatedData:
         else:
             raise ValueError("Method '" + feat_skew_method +
                              "' not implemented. Available feature skew methods are: ['gaussian-noise', "
-                             "'feature-split']")
+                             "'hist-dirichlet']")
 
         # Get sizes of each client
         sizes = [len(value) for key, value in fed_data['without_class_completion'].items()]
@@ -837,6 +839,7 @@ class SplitAsFederatedData:
         JS_dist_quant = jensen_shannon_distance(perc_part_cli)
         # Calculate Hellinger distance for quantity (no completion)
         HD_dist_quant = hellinger_distance(perc_part_cli)
+        print(HD_dist_quant)
         # Calculate Earth Mover’s distance for quantity (no completion)
         emd_dist_quant = earth_movers_distance(perc_part_cli)
 
