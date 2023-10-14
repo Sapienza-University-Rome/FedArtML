@@ -59,34 +59,35 @@
 
 
 ######################################################################################################################
+##############################
+###### CIFAR10 DATASET ######
+##############################
 
-from fedartml import SplitAsFederatedData
-from keras.datasets import cifar10
-import numpy as np
-random_state = 0
-# Load CIFAR 10data
-(x_train, y_train), (x_test, y_test) = cifar10.load_data()
-y_train = np.reshape(y_train, (y_train.shape[0],))
-y_test = np.reshape(y_test, (y_test.shape[0],))
-x_train = x_train / 255
-x_test = x_test / 255
-
-# Define (centralized) labels to use
-CIFAR10_labels = y_train
-
-# Instanciate InteractivePlots object
-my_plot = SplitAsFederatedData(random_state=random_state)
-# # sigmas = [10**1]
-# # sigmas = [10**1,10**2,10**3,10**4,10**5,10**6,10**7,10**8,10**9,10**10,10**11,10**12,10**13,10**14,10**15]
-# # sigmas = [0, 0.00001,0.0001, 0.001,0.01,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,10,10**2,10**3,10**4,10**5,10**6,10**7,10**8,10**9,10**10,10**11,10**12,10**13,10**14,10**15]
-# #
-# # sigmas = [0.00001,0.003,0.1]
-# # sigmas = [10**3]
-# #
-# # for sig in sigmas:
-# #     clients_glob, list_ids_sampled, miss_class_per_node, distances = my_plot.create_clients(image_list=x_train, label_list=y_train,
-# #                                                                              num_clients=6, prefix_cli='Local_node',
-# #                                                                              method="dirichlet", alpha=1000, sigma_noise=sig, bins='n_samples')
+# from fedartml import SplitAsFederatedData
+# from keras.datasets import cifar10
+# import numpy as np
+# random_state = 0
+# # Load CIFAR 10data
+# (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+# y_train = np.reshape(y_train, (y_train.shape[0],))
+# y_test = np.reshape(y_test, (y_test.shape[0],))
+# x_train = x_train / 255
+# x_test = x_test / 255
+#
+# # Define (centralized) labels to use
+# CIFAR10_labels = y_train
+#
+# # Instanciate InteractivePlots object
+# my_plot = SplitAsFederatedData(random_state=random_state)
+#
+# # # Feature skew Gaussian Noise
+# sigmas = [0, 0.000001, 0.00001,0.0001,0.0005,0.001,0.01,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
+# sigmas = [0.02]
+# for sig in sigmas:
+#     clients_glob, list_ids_sampled, miss_class_per_node, distances = my_plot.create_clients(image_list=x_train, label_list=y_train,
+#                                                                              num_clients=6, prefix_cli='Local_node',
+#                                                                              method="dirichlet", alpha=1000, sigma_noise=sig, bins='n_samples',feat_sample_rate=0.01)
+#     del clients_glob,list_ids_sampled,miss_class_per_node,distances
 # # print(distances)
 # # print(miss_class_per_node)
 #
@@ -96,19 +97,41 @@ my_plot = SplitAsFederatedData(random_state=random_state)
 #                                                                                         feat_skew_method="feature-split",
 #                                                                                         alpha_feat_split=0.01)
 # print(distances)
-alphas = [1000,100,6,3,1,1.1,0.7,0.5,0.3,0.1,0.09,0.07,0.05,0.03]
-# alphas = [1000,1.1,0.09]
-for alpha_sel in alphas:
-    clients_glob, list_ids_sampled, miss_class_per_node, distances = my_plot.create_clients(image_list=x_train, label_list=y_train,
-                                                                         num_clients=100, prefix_cli='Local_node',
-                                                                                        method="no-label-skew",
-                                                                                        alpha=1000,
-                                                                                        quant_skew_method="dirichlet",
-                                                                                        alpha_quant_split=alpha_sel)
+
+
+# # Feature skew hist-dirichlet
+# alphas = [1000,100,6,3,1,1.1,0.7,0.5,0.3,0.1,0.09,0.07,0.05,0.03]
+# alphas = [1000,6,1,0.3,0.03]
+# for alpha_sel in alphas:
+#     clients_glob, list_ids_sampled, miss_class_per_node, distances = my_plot.create_clients(image_list=x_train, label_list=y_train,
+#                                                                          num_clients=6, prefix_cli='Local_node',
+#                                                                          method="no-feature-skew", alpha=1000,
+#                                                                                         feat_skew_method="hist-dirichlet",
+#                                                                                         alpha_feat_split=alpha_sel)
+
 # print(distances)
+# print(distances['without_class_completion_feat']['hellinger'])
+
+# # Quantity skew dirichlet
+# alphas = [1000,100,6,3,1,1.1,0.7,0.5,0.3,0.1,0.09,0.07,0.05,0.03]
+# # # alphas = [0.01,0.001,0.0001]
+# # alphas = [0.03]
+# for alpha_sel in alphas:
+#     clients_glob, list_ids_sampled, miss_class_per_node, distances = my_plot.create_clients(image_list=x_train, label_list=y_train,
+#                                                                          num_clients=6, prefix_cli='Local_node',
+#                                                                                         method="no-label-skew",
+#                                                                                         alpha=1000,
+#                                                                                         quant_skew_method="dirichlet",
+#                                                                                         alpha_quant_split=alpha_sel)
+# # # print(distances)
 # print(distances['without_class_completion_quant'])
+# print(distances['without_class_completion'])
 
 # ####################################################################################################################
+##############################
+###### PHYSIONET DATASET ######
+##############################
+
 # from fedartml import SplitAsFederatedData
 # from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler
 # from sklearn.impute import SimpleImputer
@@ -160,7 +183,7 @@ for alpha_sel in alphas:
 # my_plot = SplitAsFederatedData(random_state=random_state)
 # my_plot = SplitAsFederatedData()
 
-
+# # Label skew dirichlet
 # clients_glob, list_ids_sampled, miss_class_per_node, distances = my_plot.create_clients(image_list=x_train_glob,
 #                                                                                         label_list=y_train_glob_num,
 #                                                                                         num_clients=10,
@@ -168,7 +191,7 @@ for alpha_sel in alphas:
 #                                                                                         method="dirichlet", alpha=0.03)
 
 
-
+# # Feature skew Gaussian Noise
 # sigmas = [0, 0.000001, 0.00001,0.0001, 0.001,0.01,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,10,10**2,10**3,10**4,10**5,10**6,10**7,10**8,10**9,10**10,10**11,10**12,10**13,10**14,10**15]
 # sigmas = [10**3.8,10**4.02,10**4.15,10**5]
 # sigmas = [0, 9**-6, 10**-3, 20**-1, 10**3]
@@ -181,23 +204,207 @@ for alpha_sel in alphas:
 #
 # print(distances['without_class_completion_feat']['hellinger'])
 
+# # Feature skew hist-dirichlet
+
 # clients_glob, list_ids_sampled, miss_class_per_node, distances = my_plot.create_clients(image_list=x_train_glob, label_list=y_train_glob_num,
 #                                                                          num_clients=2, prefix_cli='Local_node',
 #                                                                          method="no-feature-skew", alpha=1000,
-#                                                                                         feat_skew_method="feature-split",
+#                                                                                         feat_skew_method="hist-dirichlet",
 #                                                                                         alpha_feat_split=1000)
 
 # print(distances)
 # print(distances['without_class_completion_feat']['hellinger'])
 
+# Quantity skew dirichlet
 # alphas = [1000,100,6,3,1,1.1,0.7,0.5,0.3,0.1,0.09,0.07,0.05,0.03]
-# # alphas = [1000,1,0.07]
-# # alphas = [0.07]
+# # alphas = [0.01,0.001,0.0001]
+# alphas = [1000,1,0.07]
+# # alphas = [1000]
 # for alpha_sel in alphas:
 #     clients_glob, list_ids_sampled, miss_class_per_node, distances = my_plot.create_clients(image_list=x_train_glob, label_list=y_train_glob_num,
-#                                                                          num_clients=100, prefix_cli='Local_node',
+#                                                                          num_clients=6, prefix_cli='Local_node',
 #                                                                          method="no-label-skew", alpha=1000,
 #                                                                          quant_skew_method="dirichlet", alpha_quant_split=alpha_sel)
+#
+# # print(distances)
+# print(distances['without_class_completion_quant'])
+# print(distances['without_class_completion'])
+
+
+
+######################################################################################################################
+##############################
+###### FMNIST DATASET ######
+##############################
+
+# from fedartml import SplitAsFederatedData
+# from keras.datasets import fashion_mnist
+# import numpy as np
+# random_state = 0
+# # Load CIFAR 10data
+# (x_train, y_train), (x_test, y_test) = fashion_mnist.load_data()
+# # y_train = np.reshape(y_train, (y_train.shape[0],))
+# # y_test = np.reshape(y_test, (y_test.shape[0],))
+# x_train = x_train / 255
+# x_test = x_test / 255
+#
+# # Define (centralized) labels to use
+# CIFAR10_labels = y_train
+#
+# # Instanciate InteractivePlots object
+# my_plot = SplitAsFederatedData(random_state=random_state)
+
+# alphas = [1000,100,6,3,1,1.1,0.7,0.5,0.3,0.1,0.09,0.07,0.05,0.03]
+# alphas = [6]
+# for alpha in alphas:
+#     # Label skew dirichlet
+#     clients_glob, list_ids_sampled, miss_class_per_node, distances = my_plot.create_clients(image_list=x_train,
+#                                                                                             label_list=y_train,
+#                                                                                             num_clients=6,
+#                                                                                             prefix_cli='Local_node',
+#                                                                                             method="dirichlet", alpha=alpha)
+#
+#     del clients_glob, list_ids_sampled, miss_class_per_node, distances
+
+# # Feature skew Gaussian Noise
+# sigmas = [0, 0.000001, 0.00001,0.0001,0.0005,0.001,0.01,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
+# # sigmas = [0.02]
+# for sig in sigmas:
+#     clients_glob, list_ids_sampled, miss_class_per_node, distances = my_plot.create_clients(image_list=x_train, label_list=y_train,
+#                                                                              num_clients=6, prefix_cli='Local_node',
+#                                                                              method="dirichlet", alpha=1000, sigma_noise=sig, bins='n_samples',feat_sample_rate=0.1)
+#     del clients_glob,list_ids_sampled,miss_class_per_node,distances
+# print(distances)
+# print(miss_class_per_node)
+
+
+# # Feature skew hist-dirichlet
+# alphas = [1000,100,6,3,1,1.1,0.7,0.5,0.3,0.1,0.09,0.07,0.05,0.03]
+# # alphas = [1000,6,1,0.3,0.03]
+# for alpha_sel in alphas:
+#     clients_glob, list_ids_sampled, miss_class_per_node, distances = my_plot.create_clients(image_list=x_train, label_list=y_train,
+#                                                                          num_clients=6, prefix_cli='Local_node',
+#                                                                          method="no-feature-skew", alpha=1000,
+#                                                                                         feat_skew_method="hist-dirichlet",
+#                                                                                         alpha_feat_split=alpha_sel)
+#     del clients_glob, list_ids_sampled, miss_class_per_node, distances
 
 # print(distances)
+# print(distances['without_class_completion_feat']['hellinger'])
+
+# # Quantity skew dirichlet
+# alphas = [1000,100,6,3,1,1.1,0.7,0.5,0.3,0.1,0.09,0.07,0.05,0.03]
+# # alphas = [0.01,0.001,0.0001]
+# # alphas = [1000,1.1,0.09]
+# for alpha_sel in alphas:
+#     clients_glob, list_ids_sampled, miss_class_per_node, distances = my_plot.create_clients(image_list=x_train, label_list=y_train,
+#                                                                          num_clients=6, prefix_cli='Local_node',
+#                                                                                         method="no-label-skew",
+#                                                                                         alpha=1000,
+#                                                                                         quant_skew_method="dirichlet",
+#                                                                                         alpha_quant_split=alpha_sel)
+#     del clients_glob, list_ids_sampled, miss_class_per_node
+# # print(distances)
 # print(distances['without_class_completion_quant'])
+# print(distances['without_class_completion'])
+
+
+
+
+######################################################################################################################
+##############################
+###### COVTYPE DATASET ######
+##############################
+
+from fedartml import SplitAsFederatedData
+from sklearn.model_selection import train_test_split
+from sklearn.datasets import fetch_covtype
+from sklearn.preprocessing import MinMaxScaler
+
+X, y = fetch_covtype(return_X_y = True)
+
+random_state = 0
+x_train, x_test, y_train, y_test = train_test_split(X, y, test_size = 0.1, random_state = random_state)
+
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler
+
+# Scaling the data using the robustScaler
+scaler = RobustScaler()
+scaler.fit(x_train)
+x_train = scaler.transform(x_train)
+
+# Instanciate InteractivePlots object
+my_plot = SplitAsFederatedData(random_state=random_state)
+
+# alphas = [1000,100,6,3,1,1.1,0.7,0.5,0.3,0.1,0.09,0.07,0.05,0.03]
+# # alphas = [0.03]
+# # alphas = [6]
+# for alpha in alphas:
+#     # Label skew dirichlet
+#     clients_glob, list_ids_sampled, miss_class_per_node, distances = my_plot.create_clients(image_list=x_train,
+#                                                                                             label_list=y_train,
+#                                                                                             num_clients=6,
+#                                                                                             prefix_cli='Local_node',
+#                                                                                             method="dirichlet", alpha=alpha)
+#
+#     del clients_glob, list_ids_sampled, miss_class_per_node, distances
+
+# # Feature skew Gaussian Noise
+sigmas = [0, 0.000001, 0.000002, 0.00001,0.0001,0.0005,0.001,0.01,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
+sigmas = [0, 0.000001, 0.000002, 0.00001,0.0001, 0.001,0.01, 0.02,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,10,10**2,10**3,10**4,10**5,10**6,10**7,10**8,10**9,10**10,10**11,10**12,10**13,10**14,10**15]
+sigmas = [0.02]
+for sig in sigmas:
+    clients_glob, list_ids_sampled, miss_class_per_node, distances = my_plot.create_clients(image_list=x_train, label_list=y_train,
+                                                                             num_clients=6, prefix_cli='Local_node',
+                                                                            method="dirichlet", alpha=1000, sigma_noise=sig, bins='n_samples',feat_sample_rate=0.1)
+    del clients_glob,list_ids_sampled,miss_class_per_node
+print(distances)
+# print(miss_class_per_node)
+
+
+# # Feature skew hist-dirichlet
+# alphas = [1000,100,6,3,1,1.1,0.7,0.5,0.3,0.1,0.09,0.07,0.05,0.03]
+# alphas = [0.03]
+# for alpha_sel in alphas:
+#     clients_glob, list_ids_sampled, miss_class_per_node, distances = my_plot.create_clients(image_list=x_train, label_list=y_train,
+#                                                                          num_clients=6, prefix_cli='Local_node',
+#                                                                          method="no-feature-skew", alpha=1000,
+#                                                                                         feat_skew_method="hist-dirichlet",
+#                                                                                         alpha_feat_split=alpha_sel)
+#     del clients_glob, list_ids_sampled, miss_class_per_node
+#
+# # print(distances)
+# print(distances['without_class_completion_feat']['hellinger'])
+
+# # Quantity skew dirichlet
+# alphas = [1000,100,6,3,1,1.1,0.7,0.5,0.3,0.1,0.09,0.07,0.05,0.03]
+# # alphas = [0.01,0.001,0.0001]
+# alphas = [0.03]
+# for alpha_sel in alphas:
+#     clients_glob, list_ids_sampled, miss_class_per_node, distances = my_plot.create_clients(image_list=x_train, label_list=y_train,
+#                                                                          num_clients=6, prefix_cli='Local_node',
+#                                                                                         method="no-label-skew",
+#                                                                                         alpha=1000,
+#                                                                                         quant_skew_method="dirichlet",
+#                                                                                         alpha_quant_split=alpha_sel)
+#     del clients_glob, list_ids_sampled, miss_class_per_node
+# print(distances)
+# print(distances['without_class_completion_quant'])
+# print(distances['without_class_completion'])
+
+
+# # Quantity skew minsize-dirichlet
+# alphas = [1000,100,6,3,1,1.1,0.7,0.5,0.3,0.1,0.09,0.07,0.05,0.03]
+# # alphas = [0.01,0.001,0.0001]
+# alphas = [0.03]
+# for alpha_sel in alphas:
+#     clients_glob, list_ids_sampled, miss_class_per_node, distances = my_plot.create_clients(image_list=x_train, label_list=y_train,
+#                                                                          num_clients=6, prefix_cli='Local_node',
+#                                                                                         method="no-label-skew",
+#                                                                                         alpha=1000,
+#                                                                                         quant_skew_method="minsize-dirichlet",
+#                                                                                         alpha_quant_split=alpha_sel)
+#     del clients_glob, list_ids_sampled, miss_class_per_node
+# print(distances)
+# print(distances['without_class_completion_quant'])
+# print(distances['without_class_completion'])

@@ -290,7 +290,7 @@ class SplitAsFederatedData:
         return histogram
 
     @staticmethod
-    def dirichlet_method_quant_skew(labels, local_nodes, alpha=1000, random_state=None):
+    def dirichlet_method_quant_skew(labels, local_nodes, alpha=1000, random_state=None, method="no-quant-skew"):
         """
         Create a federated dataset divided per each local node (client) using the Dirichlet (dirichlet) method to evaluate quantity skew.
 
@@ -306,6 +306,8 @@ class SplitAsFederatedData:
         random_state : int
             Controls the shuffling applied to the generation of pseudorandom numbers. Pass an int for reproducible
             output across multiple function calls.
+        method : str
+            Method to create the federated data based on quantity skew. Possible options: "no-quant-skew"(default), "dirichlet", "minsize-dirichlet"
 
         Returns
         -------
@@ -335,12 +337,22 @@ class SplitAsFederatedData:
         np.random.seed(random_state_loop)
         idxs = np.random.permutation(N)
 
-        while min_size < 10:
+        min_require_size = len(np.unique(labels)) * 3
+
+        if method == "dirichlet":
+            while min_size < min_require_size:
+                proportions = np.random.dirichlet(np.repeat(alpha, local_nodes))
+                proportions = proportions / proportions.sum()
+                min_size = np.min(proportions * len(idxs))
+        elif method == "minsize-dirichlet":
             proportions = np.random.dirichlet(np.repeat(alpha, local_nodes))
             proportions = proportions / proportions.sum()
-            min_size = np.min(proportions * len(idxs))
+            proportions = [(min_require_size + 1) / len(idxs) if i < + (min_require_size + 1) / len(idxs) else i for i
+                           in proportions]
+            proportions = [i / sum(proportions) for i in proportions]
 
         proportions = (np.cumsum(proportions) * len(idxs)).astype(int)[:-1]
+
         idx_batch = np.split(idxs, proportions)
 
         idx_batch = [list(value) for value in idx_batch]
@@ -369,11 +381,11 @@ class SplitAsFederatedData:
             idx_distr.append(idx_batch[j])
             if random_state is not None:
                 random_state_loop += 100
-        idx_distr
+
         return pctg_distr, num_distr, idx_distr, num_per_node
 
-    def create_clients(self, image_list, label_list, num_clients=4, prefix_cli='client', method="percent_noniid",
-                       alpha=1000, percent_noniid=0, sigma_noise=0, bins='n_samples', feat_sample_rate=1,
+    def create_clients(self, image_list, label_list, num_clients=4, prefix_cli='client', method="dirichlet",
+                       alpha=1000, percent_noniid=0, sigma_noise=0, bins='n_samples', feat_sample_rate=0.1,
                        feat_skew_method="gaussian-noise", alpha_feat_split=1000, idx_feat='feat-mean',
                        feat_quantile=20, quant_skew_method="no-quant-skew", alpha_quant_split=1000):
         """
@@ -413,7 +425,7 @@ class SplitAsFederatedData:
         feat_quantile : int
             Number quantiles to use in the feature skew simulation. 20 for ventiles (default), 10 for deciles, 4 for quartiles, etc. Applicable only for feat_skew_method="hist-dirichlet".
         quant_skew_method : str
-            Method to create the federated data based on quantity skew. Possible options: "no-quant-skew"(default), "dirichlet"
+            Method to create the federated data based on quantity skew. Possible options: "no-quant-skew"(default), "dirichlet", "minsize-dirichlet
         alpha_quant_split : float
             Concentration parameter of the Dirichlet distribution defining the desired degree of non-IID-ness for
             the quantity skew of the federated data. Applicable only for quant_skew_method="dirichlet".
@@ -472,6 +484,9 @@ class SplitAsFederatedData:
         if (method == "percent_noniid" or method == "dirichlet") and quant_skew_method == "dirichlet":
             raise ValueError(
                 "The dirichlet (for quantity skew) method can't be used simultaneously with dirichlet nor percent_noniid label skew methods. If you intent to use dirichlet (for quantity skew) use method == 'no-label-skew'")
+        if (method == "no-label-skew" and quant_skew_method == "no-quant-skew") and feat_skew_method == "gaussian-noise":
+            raise ValueError(
+                "When using Gaussian Noise (for feature skew) either 'method' or 'quant_skew_method' should be different to 'no-label-skew' or 'no-quant-skew', respectively.")
         elif feat_skew_method == "gaussian-noise":
             num_missing_classes = []
             # Set list to append labels and features for each client
@@ -495,11 +510,21 @@ class SplitAsFederatedData:
             elif quant_skew_method == "dirichlet":
                 lbl_distro_clients_pctg, lbl_distro_clients_num, lbl_distro_clients_idx, num_per_node = \
                     self.dirichlet_method_quant_skew(labels=label_list, local_nodes=num_clients,
-                                                     alpha=alpha_quant_split, random_state=random_state_loop)
-            else:
+                                                     alpha=alpha_quant_split, random_state=random_state_loop,
+                                                     method=quant_skew_method)
+            elif quant_skew_method == "minsize-dirichlet":
+                lbl_distro_clients_pctg, lbl_distro_clients_num, lbl_distro_clients_idx, num_per_node = \
+                    self.dirichlet_method_quant_skew(labels=label_list, local_nodes=num_clients,
+                                                     alpha=alpha_quant_split, random_state=random_state_loop,
+                                                     method=quant_skew_method)
+            elif method not in ['percent_noniid', 'dirichlet', 'no-label-skew']:
                 raise ValueError("Method '" + method +
                                  "' not implemented. Available label skew methods are: ['percent_noniid', "
-                                 "'dirichlet', 'no-label-skew']")
+                                 "'dirichlet', 'no-label-skew'].")
+            else:
+                raise ValueError("Method '" + quant_skew_method +
+                                 "' not implemented. Available quantity skew methods are: ['dirichlet', "
+                                 "'minsize-dirichlet', 'no-quant-skew']")
             # Calculate Jensen-Shannon distance
             JS_dist = jensen_shannon_distance(lbl_distro_clients_pctg)
             # Calculate Hellinger distance
@@ -812,6 +837,7 @@ class SplitAsFederatedData:
             JS_dist_feat = jensen_shannon_distance(feat_distro_clients_pctg)
             # Calculate Hellinger distance for features (no completion)
             HD_dist_feat = hellinger_distance(feat_distro_clients_pctg)
+
             # Calculate Earth Mover’s distance for features (no completion)
             emd_dist_feat = earth_movers_distance(feat_distro_clients_pctg)
 
@@ -839,12 +865,11 @@ class SplitAsFederatedData:
         JS_dist_quant = jensen_shannon_distance(perc_part_cli)
         # Calculate Hellinger distance for quantity (no completion)
         HD_dist_quant = hellinger_distance(perc_part_cli)
-
         # Calculate Earth Mover’s distance for quantity (no completion)
         emd_dist_quant = earth_movers_distance(perc_part_cli)
 
         distances['without_class_completion_quant'] = {'jensen-shannon': JS_dist_quant, 'hellinger': HD_dist_quant,
-                                                      'earth-movers': emd_dist_quant}
+                                                       'earth-movers': emd_dist_quant}
 
         # Get sizes of each client
         sizes = [len(value) for key, value in fed_data['with_class_completion'].items()]
@@ -858,6 +883,6 @@ class SplitAsFederatedData:
         emd_dist_quant = earth_movers_distance(perc_part_cli)
 
         distances['with_class_completion_quant'] = {'jensen-shannon': JS_dist_quant, 'hellinger': HD_dist_quant,
-                                                      'earth-movers': emd_dist_quant}
+                                                    'earth-movers': emd_dist_quant}
 
         return fed_data, ids_list_fed_data, num_missing_classes, distances
