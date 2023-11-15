@@ -384,10 +384,111 @@ class SplitAsFederatedData:
 
         return pctg_distr, num_distr, idx_distr, num_per_node
 
+    @staticmethod
+    def st_dirichlet_method(labels, local_nodes, alpha=1000, random_state=None, st_variable=None):
+        """
+        Create a federated dataset divided per each local node (client) using the Dirichlet (dirichlet) method.
+
+        Parameters
+        ----------
+        labels : array-like
+            The target values (class labels in classification).
+        local_nodes : int
+            Number of local nodes (clients) used in the federated learning paradigm.
+        alpha : float
+            Concentration parameter of the Dirichlet distribution defining the desired degree of non-IID-ness for
+            the federated data.
+        random_state : int
+            Controls the shuffling applied to the generation of pseudorandom numbers. Pass an int for reproducible
+            output across multiple function calls.
+        st_variable : array-like
+            The spatio-temporal variable from the centralized data.
+        Returns
+        -------
+        pctg_distr : array-like
+            Percentage (between 0 and 1) distribution of the classes for each local node (client).
+        num_distr : array-like
+            Numbers of distribution of the classes for each local node (client).
+        idx_distr : array-like
+            Indexes of examples (partition) taken for each local node (client).
+        num_per_node : array-like
+            Number of examples per each local node (client).
+        pctg_distr_st_var : array-like
+            Percentage (between 0 and 1) distribution of the spatio-temporal variable's categories for each local node (client).
+        References
+        ----------
+
+        """
+        st_variable = np.array(st_variable)
+        labels = np.array(labels)
+        # print(st_variable)
+        # print(st_variable)
+        min_size = 0
+        num_categ = len(np.unique(st_variable))
+        N = st_variable.shape[0]
+        random_state_loop = random_state
+
+        while min_size < 10:
+            idx_batch = [[] for _ in range(local_nodes)]
+            for k in range(num_categ):
+                idx_k = np.where(st_variable == k)[0]
+                np.random.seed(random_state_loop)
+                np.random.shuffle(idx_k)
+                proportions = np.random.dirichlet(np.repeat(alpha, local_nodes))
+                # Balance
+                proportions = np.array([p * (len(idx_j) < N / local_nodes) for p, idx_j in zip(proportions, idx_batch)])
+                proportions = proportions / proportions.sum()
+                proportions = (np.cumsum(proportions) * len(idx_k)).astype(int)[:-1]
+                idx_batch = [idx_j + idx.tolist() for idx_j, idx in zip(idx_batch, np.split(idx_k, proportions))]
+                min_size = min([len(idx_j) for idx_j in idx_batch])
+                if random_state is not None:
+                    random_state_loop += 100
+
+        pctg_distr = []
+        num_distr = []
+        idx_distr = []
+        num_per_node = []
+
+        pctg_distr_st_var = []
+
+        random_state_loop = random_state
+        for j in range(local_nodes):
+            np.random.seed(random_state_loop)
+            np.random.shuffle(idx_batch[j])
+
+            aux_examples_node = labels[idx_batch[j]]
+            # Get distribution of labels
+            df_aux = pd.DataFrame(aux_examples_node, columns=['label']).label.value_counts().reset_index()
+            df_node = pd.DataFrame(np.unique(labels), columns=['index'])
+            df_node = df_node.merge(df_aux, how='left', left_on='index', right_on='index').replace(np.nan, 0)
+            num_per_node.append(list(df_node.label))
+            df_node['perc'] = df_node.label / sum(df_node.label)
+
+            pctg_distr.append(list(df_node.perc))
+            num_distr.append(aux_examples_node)
+            idx_distr.append(idx_batch[j])
+
+            # Get spatio-temporal variable distribution per node
+            aux_examples_node = st_variable[idx_batch[j]]
+            # Get distribution of labels
+            df_aux = pd.DataFrame(aux_examples_node, columns=['st_var']).st_var.value_counts().reset_index()
+            df_node = pd.DataFrame(np.unique(st_variable), columns=['index'])
+            df_node = df_node.merge(df_aux, how='left', left_on='index', right_on='index').replace(np.nan, 0)
+
+            df_node['perc'] = df_node.st_var / sum(df_node.st_var)
+
+            pctg_distr_st_var.append(list(df_node.perc))
+
+            if random_state is not None:
+                random_state_loop += 100
+
+        return pctg_distr, num_distr, idx_distr, num_per_node, pctg_distr_st_var
+
     def create_clients(self, image_list, label_list, num_clients=4, prefix_cli='client', method="dirichlet",
                        alpha=1000, percent_noniid=0, sigma_noise=0, bins='n_samples', feat_sample_rate=0.1,
                        feat_skew_method="gaussian-noise", alpha_feat_split=1000, idx_feat='feat-mean',
-                       feat_quantile=20, quant_skew_method="no-quant-skew", alpha_quant_split=1000):
+                       feat_quantile=20, quant_skew_method="no-quant-skew", alpha_quant_split=1000,
+                       spa_temp_skew_method="no-spatemp-skew", alpha_spa_temp=1000, spa_temp_var=None):
         """
         Create a federated dataset divided per each local node (client) using the desired method (percent_noniid or
         dirichlet). It works only for classification problems (labels as classes) with quantitaive (numeric) features.
@@ -425,10 +526,17 @@ class SplitAsFederatedData:
         feat_quantile : int
             Number quantiles to use in the feature skew simulation. 20 for ventiles (default), 10 for deciles, 4 for quartiles, etc. Applicable only for feat_skew_method="hist-dirichlet".
         quant_skew_method : str
-            Method to create the federated data based on quantity skew. Possible options: "no-quant-skew"(default), "dirichlet", "minsize-dirichlet
+            Method to create the federated data based on quantity skew. Possible options: "no-quant-skew"(default), "dirichlet", "minsize-dirichlet"
         alpha_quant_split : float
             Concentration parameter of the Dirichlet distribution defining the desired degree of non-IID-ness for
             the quantity skew of the federated data. Applicable only for quant_skew_method="dirichlet".
+        spa_temp_skew_method : str
+            Method to create the federated data based on spatio-temporal skew. Possible options: "no-spatemp-skew"(default), "st-dirichlet"
+        alpha_spa_temp : float
+            Concentration parameter of the Dirichlet distribution defining the desired degree of non-IID-ness for
+            the spatio-temporal skew of the federated data. Applicable only for spa_temp_skew_method="st-dirichlet".
+        spa_temp_var : array-like
+            The spatio-temporal variable from the centralized data. Applicable only for spa_temp_skew_method="st-dirichlet".
         Returns
         -------
         fed_data : dict
@@ -484,9 +592,10 @@ class SplitAsFederatedData:
         if (method == "percent_noniid" or method == "dirichlet") and quant_skew_method == "dirichlet":
             raise ValueError(
                 "The dirichlet (for quantity skew) method can't be used simultaneously with dirichlet nor percent_noniid label skew methods. If you intent to use dirichlet (for quantity skew) use method == 'no-label-skew'")
-        if (method == "no-label-skew" and quant_skew_method == "no-quant-skew") and feat_skew_method == "gaussian-noise":
+        if (
+                method == "no-label-skew" and quant_skew_method == "no-quant-skew" and spa_temp_skew_method == "no-spatemp-skew") and feat_skew_method == "gaussian-noise":
             raise ValueError(
-                "When using Gaussian Noise (for feature skew) either 'method' or 'quant_skew_method' should be different to 'no-label-skew' or 'no-quant-skew', respectively.")
+                "When using Gaussian Noise (for feature skew) either 'method', 'quant_skew_method' or 'temp_skew_method' should be different to 'no-label-skew','no-quant-skew' or 'no-spatemp-skew', respectively.")
         elif feat_skew_method == "gaussian-noise":
             num_missing_classes = []
             # Set list to append labels and features for each client
@@ -517,6 +626,12 @@ class SplitAsFederatedData:
                     self.dirichlet_method_quant_skew(labels=label_list, local_nodes=num_clients,
                                                      alpha=alpha_quant_split, random_state=random_state_loop,
                                                      method=quant_skew_method)
+            elif spa_temp_skew_method == "st-dirichlet":
+                lbl_distro_clients_pctg, lbl_distro_clients_num, lbl_distro_clients_idx, num_per_node, \
+                st_var_dist_cli_pctg = self.st_dirichlet_method(labels=label_list, local_nodes=num_clients,
+                                                                alpha=alpha_spa_temp, random_state=random_state_loop,
+                                                                st_variable=spa_temp_var)
+
             elif method not in ['percent_noniid', 'dirichlet', 'no-label-skew']:
                 raise ValueError("Method '" + method +
                                  "' not implemented. Available label skew methods are: ['percent_noniid', "
@@ -699,7 +814,6 @@ class SplitAsFederatedData:
 
             distances['with_class_completion_feat'] = {'jensen-shannon': JS_dist_feat, 'hellinger': H_dist_feat,
                                                        'earth-movers': emd_dist_feat}
-
         elif feat_skew_method == "hist-dirichlet":
             num_missing_classes = []
             # Set list to append labels and features for each client
@@ -884,5 +998,18 @@ class SplitAsFederatedData:
 
         distances['with_class_completion_quant'] = {'jensen-shannon': JS_dist_quant, 'hellinger': HD_dist_quant,
                                                     'earth-movers': emd_dist_quant}
+
+        if spa_temp_skew_method == "st-dirichlet":
+            # Spatio Temporal Skew distances
+            # Calculate Jensen-Shannon distance
+            JS_dist_spatemp = jensen_shannon_distance(st_var_dist_cli_pctg)
+            # Calculate Hellinger distance
+            H_dist_spatemp = hellinger_distance(st_var_dist_cli_pctg)
+            # Calculate Earth Mover’s distance
+            emd_dist_spatemp = earth_movers_distance(st_var_dist_cli_pctg)
+
+            distances['without_class_completion_spatemp'] = {'jensen-shannon': JS_dist_spatemp,
+                                                          'hellinger': H_dist_spatemp,
+                                                          'earth-movers': emd_dist_spatemp}
 
         return fed_data, ids_list_fed_data, num_missing_classes, distances
