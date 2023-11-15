@@ -547,6 +547,8 @@ class SplitAsFederatedData:
             Number of missing classes per each local node when creating the federated dataset
         distances : dict
             Distances calculated while measuring heterogeneity (non-IID-ness) of the label's distribution among clients. Includes "with_class_completion" and "without_class_completion" cases.
+        spatemp_fed_data : dict
+            Contains categories of the spatio-temporal variable for each local node (client) after federating the data. It is generated only when spa_temp_skew_method = "st-dirichlet".
 
         Note: When creating federated data and setting heterogeneous distributions (i.e. high values of percent_noniid or small values of alpha), it is more likely the clients hold examples from only one class.
         Then, two cases (for labels and features) are returned as output for fed_data and distances:
@@ -653,11 +655,16 @@ class SplitAsFederatedData:
             data_df = pd.DataFrame(data)
             data_df.columns = [*data_df.columns[:-1], 'class']
 
+            if spa_temp_skew_method == "st-dirichlet":
+                spatem_df = pd.DataFrame(spa_temp_var, columns=['spatemp_var'])
+
             fed_data = {}
             ids_list_fed_data = {}
             pctg_distr = []
             dist_hist_no_completion = []
             dist_hist_with_completion = []
+            st_var_cli_list = []
+            spatemp_fed_data = {}
 
             # Define number of bins for histogram
             if bins == 'n_samples':
@@ -725,6 +732,10 @@ class SplitAsFederatedData:
                 ids_list_no_completion.append(lbl_distro_clients_idx[i])
 
                 shards_no_completion.append(list(zip(X, y)))
+
+                if spa_temp_skew_method == "st-dirichlet":
+                    st_var_cli = spatem_df.iloc[lbl_distro_clients_idx[i], 0].values.tolist()
+                    st_var_cli_list.append(list(st_var_cli))
 
                 # Add missing classes when sampling (mainly for extreme case percent iid = 100)
                 # diff_classes = list(set(label_list) - set(lbl_distro_clients_num[i]))
@@ -813,7 +824,12 @@ class SplitAsFederatedData:
             emd_dist_feat = np.mean(dists)
 
             distances['with_class_completion_feat'] = {'jensen-shannon': JS_dist_feat, 'hellinger': H_dist_feat,
-                                                       'earth-movers': emd_dist_feat}
+                                                      'earth-movers': emd_dist_feat}
+
+            if spa_temp_skew_method == "st-dirichlet":
+                spatemp_fed_data['without_class_completion'] = \
+                    {client_names[i]: st_var_cli_list[i] for i in range(len(client_names))}
+
         elif feat_skew_method == "hist-dirichlet":
             num_missing_classes = []
             # Set list to append labels and features for each client
@@ -1011,5 +1027,7 @@ class SplitAsFederatedData:
             distances['without_class_completion_spatemp'] = {'jensen-shannon': JS_dist_spatemp,
                                                           'hellinger': H_dist_spatemp,
                                                           'earth-movers': emd_dist_spatemp}
+            return fed_data, ids_list_fed_data, num_missing_classes, distances, spatemp_fed_data
 
-        return fed_data, ids_list_fed_data, num_missing_classes, distances
+        else:
+            return fed_data, ids_list_fed_data, num_missing_classes, distances

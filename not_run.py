@@ -401,29 +401,29 @@ from fedartml import SplitAsFederatedData
 ###### COVTYPE DATASET ######
 ##############################
 
-# from fedartml import SplitAsFederatedData
-# from sklearn.model_selection import train_test_split
-# from sklearn.datasets import fetch_covtype
-# from sklearn.preprocessing import MinMaxScaler
-#
-# X, y = fetch_covtype(return_X_y = True)
-#
-# random_state = 0
-# x_train, x_test, y_train, y_test = train_test_split(X, y, test_size = 0.1, random_state = random_state)
-#
-# from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler
-#
-# # Scaling the data using the robustScaler
-# scaler = RobustScaler()
-# scaler.fit(x_train)
-# x_train = scaler.transform(x_train)
-#
-# # Instanciate InteractivePlots object
-# my_plot = SplitAsFederatedData(random_state=random_state)
-#
+from fedartml import SplitAsFederatedData
+from sklearn.model_selection import train_test_split
+from sklearn.datasets import fetch_covtype
+from sklearn.preprocessing import MinMaxScaler
+
+X, y = fetch_covtype(return_X_y = True)
+
+random_state = 0
+x_train, x_test, y_train, y_test = train_test_split(X, y, test_size = 0.1, random_state = random_state)
+
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler
+
+# Scaling the data using the robustScaler
+scaler = RobustScaler()
+scaler.fit(x_train)
+x_train = scaler.transform(x_train)
+
+# Instanciate InteractivePlots object
+my_plot = SplitAsFederatedData(random_state=random_state)
+
 # # alphas = [1000,100,6,3,1,1.1,0.7,0.5,0.3,0.1,0.09,0.07,0.05,0.03]
-# # alphas = [0.03]
-# alphas = [0.086,0.21,0.32]
+# alphas = [0.5]
+# # alphas = [0.086,0.21,0.32]
 # for alp in alphas:
 #     # Label skew dirichlet
 #     clients_glob, list_ids_sampled, miss_class_per_node, distances = my_plot.create_clients(image_list=x_train,
@@ -435,8 +435,8 @@ from fedartml import SplitAsFederatedData
 #     del clients_glob, list_ids_sampled, miss_class_per_node, distances
 
 # # Feature skew Gaussian Noise
-# sigmas = [0, 0.000001, 0.000002, 0.00001,0.0001,0.0005,0.001,0.01,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
-# sigmas = [0, 0.000001, 0.000002, 0.00001,0.0001, 0.001,0.01, 0.02,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,10,10**2,10**3,10**4,10**5,10**6,10**7,10**8,10**9,10**10,10**11,10**12,10**13,10**14,10**15]
+# # sigmas = [0, 0.000001, 0.000002, 0.00001,0.0001,0.0005,0.001,0.01,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
+# # sigmas = [0, 0.000001, 0.000002, 0.00001,0.0001, 0.001,0.01, 0.02,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,10,10**2,10**3,10**4,10**5,10**6,10**7,10**8,10**9,10**10,10**11,10**12,10**13,10**14,10**15]
 # sigmas = [0.02]
 # for sig in sigmas:
 #     clients_glob, list_ids_sampled, miss_class_per_node, distances = my_plot.create_clients(image_list=x_train, label_list=y_train,
@@ -444,32 +444,32 @@ from fedartml import SplitAsFederatedData
 #                                                                             method="dirichlet", alpha=1000, sigma_noise=sig, bins='n_samples',feat_sample_rate=0.1)
 #     del clients_glob,list_ids_sampled,miss_class_per_node
 # print(distances)
-# print(miss_class_per_node)
-
-
-# # Feature skew hist-dirichlet
+# # print(miss_class_per_node)
+#
+#
+# Feature skew hist-dirichlet
 # alphas = [1000,100,6,3,1,1.1,0.7,0.5,0.3,0.1,0.09,0.07,0.05,0.03]
-# alphas = [0.03]
+# alphas = [0.5]
 # for alpha_sel in alphas:
 #     clients_glob, list_ids_sampled, miss_class_per_node, distances = my_plot.create_clients(image_list=x_train, label_list=y_train,
 #                                                                          num_clients=6, prefix_cli='Local_node',
-#                                                                          method="no-feature-skew", alpha=1000,
+#                                                                          method="no-feature-skew", alpha=10,
 #                                                                                         feat_skew_method="hist-dirichlet",
 #                                                                                         alpha_feat_split=alpha_sel)
 #     del clients_glob, list_ids_sampled, miss_class_per_node
-#
-# # print(distances)
-# print(distances['without_class_completion_feat']['hellinger'])
 
-# # Quantity skew dirichlet
+# print(distances)
+# print(distances['without_class_completion_feat']['hellinger'])
+#
+# Quantity skew dirichlet
 # alphas = [1000,100,6,3,1,1.1,0.7,0.5,0.3,0.1,0.09,0.07,0.05,0.03]
-# # alphas = [0.01,0.001,0.0001]
-# alphas = [0.03]
+# alphas = [0.01,0.001,0.0001]
+# alphas = [0.5]
 # for alpha_sel in alphas:
 #     clients_glob, list_ids_sampled, miss_class_per_node, distances = my_plot.create_clients(image_list=x_train, label_list=y_train,
 #                                                                          num_clients=6, prefix_cli='Local_node',
 #                                                                                         method="no-label-skew",
-#                                                                                         alpha=1000,
+#                                                                                         alpha=10,
 #                                                                                         quant_skew_method="dirichlet",
 #                                                                                         alpha_quant_split=alpha_sel)
 #     del clients_glob, list_ids_sampled, miss_class_per_node
@@ -500,93 +500,93 @@ from fedartml import SplitAsFederatedData
 ##############################
 ###### UNSW-NB15 DATASET ######
 ##############################
-from fedartml import SplitAsFederatedData
-from sklearn.model_selection import train_test_split
-from sklearn.datasets import fetch_covtype
-from sklearn.preprocessing import RobustScaler
-import pandas as pd
-import numpy as np
-from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import LabelEncoder
-
-random_state = 0
-df_selected_data = pd.read_csv('data/curated_CL_UNSW-NB15.csv', sep=";")
-# Get feature names
-feature_names = [x for x in df_selected_data.columns if x not in ['attack_cat','st_variable']]
-# Get spatio temporal variable name
-st_var = ['st_variable']
-# Get features
-features = df_selected_data.loc[:,df_selected_data.columns.isin(feature_names)]
-# Get labels
-labels = list(df_selected_data['attack_cat'])
-# Get spatio temporal variable
-spa_temp_var_glob = np.array(df_selected_data['st_variable'])
-# Replace NaN values with mean values
-imputer = SimpleImputer().fit(features)
-features = imputer.transform(features)
-# features.columns = feature_names
-# Define min max scaler
-scaler = RobustScaler()
-# # Transform data
-features = np.array(scaler.fit_transform(features).tolist())
-# features.columns = feature_names
-# Bring back the database into the features
-features = np.concatenate([features,spa_temp_var_glob.reshape(df_selected_data.shape[0], 1)], axis=1)
-# Divide data in train and an auxiliar for validation/test randomly, taking the train size as 90% of the whole data
-x_train_glob, x_test_glob, y_train_glob, y_test_glob = train_test_split(features, labels, test_size = 0.1, random_state = random_state)
-# Divide auxiliar data in valdiation/train randomly, taking the validation and train size as 15% (for each) of the whole data
-x_val_glob, x_test_glob, y_val_glob, y_test_glob = train_test_split(x_test_glob, y_test_glob, test_size = 0.5, random_state = random_state)
-# Get spatio temporal feature
-spa_temp_var_glob_train = pd.Series(x_train_glob[:, -1])
-spa_temp_var_glob_val = pd.Series(x_val_glob[:, -1])
-spa_temp_var_glob_test = pd.Series(x_test_glob[:, -1])
-
-# Delete spatio temporal variable from features
-x_train_glob = x_train_glob[:, :-1].tolist()
-x_val_glob = x_val_glob[:, :-1].tolist()
-x_test_glob = x_test_glob[:, :-1].tolist()
-# print("X Train shape:",pd.DataFrame(x_train_glob).shape)
-# print("Y Train shape:",pd.DataFrame(y_train_glob).shape)
-# print("Spatio Temporal variable Train shape:",pd.DataFrame(spa_temp_var_glob_train).shape)
-# print("X Validation shape:",pd.DataFrame(x_val_glob).shape)
-# print("Y Validation shape:",pd.DataFrame(y_val_glob).shape)
-# print("Spatio Temporal variable Val shape:",pd.DataFrame(spa_temp_var_glob_val).shape)
-# print("X Test shape:",pd.DataFrame(x_test_glob).shape)
-# print("Y Test shape:",pd.DataFrame(y_test_glob).shape)
-# print("Spatio Temporal variable Test shape:",pd.DataFrame(spa_temp_var_glob_test).shape)
-# Encode (as number) the labels
-le = LabelEncoder()
-le.fit(labels)
-y_train_glob_num = pd.Series(le.transform(y_train_glob))
-y_val_glob_num = pd.Series(le.transform(y_val_glob))
-y_test_glob_num = pd.Series(le.transform(y_test_glob))
-# Encode (as number) the spatio temporal variable
-le = LabelEncoder()
-le.fit(spa_temp_var_glob)
-spa_temp_var_glob_train_num = pd.Series(le.transform(spa_temp_var_glob_train))
-spa_temp_var_glob_val_num = pd.Series(le.transform(spa_temp_var_glob_val))
-spa_temp_var_glob_test_num = pd.Series(le.transform(spa_temp_var_glob_test))
-
-my_plot = SplitAsFederatedData(random_state=random_state)
-
-# Dirichlet Spatio-Temporal
-# alphas = [0.3, 1, 6, 1000]
-# alphas = [1000, 100, 6, 3, 1, 1.1, 0.7, 0.5, 0.3, 0.1, 0.09, 0.07, 0.05, 0.03, 0.006, 0.002]
-alphas = [0.002]
-for alpha_sel in alphas:
-    clients_glob, list_ids_sampled, miss_class_per_node, distances = my_plot.create_clients(image_list=x_train_glob,
-                                                                                        label_list=y_train_glob_num,
-                                                                                        num_clients=10,
-                                                                                        prefix_cli='Local_node',
-                                                                                        method="no-label-skew",
-                                                                                        # method="dirichlet",
-                                                                                        # alpha=0.5,
-                                                                                        spa_temp_skew_method="st-dirichlet",
-                                                                                        alpha_spa_temp=alpha_sel,
-                                                                                        spa_temp_var=spa_temp_var_glob_train_num
-                                                                                        )
+# from fedartml import SplitAsFederatedData
+# from sklearn.model_selection import train_test_split
+# from sklearn.datasets import fetch_covtype
+# from sklearn.preprocessing import RobustScaler
+# import pandas as pd
+# import numpy as np
+# from sklearn.impute import SimpleImputer
+# from sklearn.preprocessing import LabelEncoder
+#
+# random_state = 0
+# df_selected_data = pd.read_csv('data/curated_CL_UNSW-NB15.csv', sep=";")
+# # Get feature names
+# feature_names = [x for x in df_selected_data.columns if x not in ['attack_cat','st_variable']]
+# # Get spatio temporal variable name
+# st_var = ['st_variable']
+# # Get features
+# features = df_selected_data.loc[:,df_selected_data.columns.isin(feature_names)]
+# # Get labels
+# labels = list(df_selected_data['attack_cat'])
+# # Get spatio temporal variable
+# spa_temp_var_glob = np.array(df_selected_data['st_variable'])
+# # Replace NaN values with mean values
+# imputer = SimpleImputer().fit(features)
+# features = imputer.transform(features)
+# # features.columns = feature_names
+# # Define min max scaler
+# scaler = RobustScaler()
+# # # Transform data
+# features = np.array(scaler.fit_transform(features).tolist())
+# # features.columns = feature_names
+# # Bring back the database into the features
+# features = np.concatenate([features,spa_temp_var_glob.reshape(df_selected_data.shape[0], 1)], axis=1)
+# # Divide data in train and an auxiliar for validation/test randomly, taking the train size as 90% of the whole data
+# x_train_glob, x_test_glob, y_train_glob, y_test_glob = train_test_split(features, labels, test_size = 0.1, random_state = random_state)
+# # Divide auxiliar data in valdiation/train randomly, taking the validation and train size as 15% (for each) of the whole data
+# x_val_glob, x_test_glob, y_val_glob, y_test_glob = train_test_split(x_test_glob, y_test_glob, test_size = 0.5, random_state = random_state)
+# # Get spatio temporal feature
+# spa_temp_var_glob_train = pd.Series(x_train_glob[:, -1])
+# spa_temp_var_glob_val = pd.Series(x_val_glob[:, -1])
+# spa_temp_var_glob_test = pd.Series(x_test_glob[:, -1])
+#
+# # Delete spatio temporal variable from features
+# x_train_glob = x_train_glob[:, :-1].tolist()
+# x_val_glob = x_val_glob[:, :-1].tolist()
+# x_test_glob = x_test_glob[:, :-1].tolist()
+# # print("X Train shape:",pd.DataFrame(x_train_glob).shape)
+# # print("Y Train shape:",pd.DataFrame(y_train_glob).shape)
+# # print("Spatio Temporal variable Train shape:",pd.DataFrame(spa_temp_var_glob_train).shape)
+# # print("X Validation shape:",pd.DataFrame(x_val_glob).shape)
+# # print("Y Validation shape:",pd.DataFrame(y_val_glob).shape)
+# # print("Spatio Temporal variable Val shape:",pd.DataFrame(spa_temp_var_glob_val).shape)
+# # print("X Test shape:",pd.DataFrame(x_test_glob).shape)
+# # print("Y Test shape:",pd.DataFrame(y_test_glob).shape)
+# # print("Spatio Temporal variable Test shape:",pd.DataFrame(spa_temp_var_glob_test).shape)
+# # Encode (as number) the labels
+# le = LabelEncoder()
+# le.fit(labels)
+# y_train_glob_num = pd.Series(le.transform(y_train_glob))
+# y_val_glob_num = pd.Series(le.transform(y_val_glob))
+# y_test_glob_num = pd.Series(le.transform(y_test_glob))
+# # Encode (as number) the spatio temporal variable
+# le = LabelEncoder()
+# le.fit(spa_temp_var_glob)
+# spa_temp_var_glob_train_num = pd.Series(le.transform(spa_temp_var_glob_train))
+# spa_temp_var_glob_val_num = pd.Series(le.transform(spa_temp_var_glob_val))
+# spa_temp_var_glob_test_num = pd.Series(le.transform(spa_temp_var_glob_test))
+#
+# my_plot = SplitAsFederatedData(random_state=random_state)
+#
+# # Dirichlet Spatio-Temporal
+# # alphas = [0.3, 1, 6, 1000]
+# # alphas = [1000, 100, 6, 3, 1, 1.1, 0.7, 0.5, 0.3, 0.1, 0.09, 0.07, 0.05, 0.03, 0.006, 0.002]
+# alphas = [0.5]
+# for alpha_sel in alphas:
+#     clients_glob, list_ids_sampled, miss_class_per_node, distances, st_clients_glob = my_plot.create_clients(image_list=x_train_glob,
+#                                                                                         label_list=y_train_glob_num,
+#                                                                                         num_clients=10,
+#                                                                                         prefix_cli='Local_node',
+#                                                                                         method="no-label-skew",
+#                                                                                         # method="dirichlet",
+#                                                                                         # alpha=0.5,
+#                                                                                         spa_temp_skew_method="st-dirichlet",
+#                                                                                         alpha_spa_temp=alpha_sel,
+#                                                                                         spa_temp_var=spa_temp_var_glob_train_num
+#                                                                                         )
 # print(distances)
-
+# print(st_clients_glob)
 
 
 # Available datasets for spatio/temporal skew
