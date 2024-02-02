@@ -589,6 +589,188 @@ my_plot = SplitAsFederatedData(random_state=random_state)
 # print(st_clients_glob)
 
 
+
+
+
+
+
+######################################################################################################################
+##############################
+###### Android_Ransomeware DATASET ######
+##############################
+# from fedartml import SplitAsFederatedData
+# from sklearn.model_selection import train_test_split
+# from sklearn.datasets import fetch_covtype
+# from sklearn.preprocessing import RobustScaler
+# import pandas as pd
+# import numpy as np
+# from sklearn.impute import SimpleImputer
+# from sklearn.preprocessing import LabelEncoder
+# random_state = 0
+# export_curated = pd.read_csv('data/selected_curated_CL_Android_Ransomeware.csv', sep=";")
+# # Get features
+# features = export_curated.iloc[:,:-2].reset_index(drop=True).values
+# # Get labels
+# labels = list(export_curated['Label'])
+# # Get spatio temporal variable
+# spa_temp_var_glob = np.array(export_curated['st_variable'])
+# # Bring back the database into the features
+# features = np.concatenate([features,spa_temp_var_glob.reshape(export_curated.shape[0], 1)], axis=1)
+#
+# # Divide data in train and an auxiliar for validation/test randomly, taking the train size as 90% of the whole data
+# x_train_glob, x_test_glob, y_train_glob, y_test_glob = train_test_split(features, labels, test_size = 0.1, random_state = random_state)
+#
+# # Divide auxiliar data in valdiation/train randomly, taking the validation and train size as 15% (for each) of the whole data
+# x_val_glob, x_test_glob, y_val_glob, y_test_glob = train_test_split(x_test_glob, y_test_glob, test_size = 0.5, random_state = random_state)
+#
+# # Get spatio temporal feature
+# spa_temp_var_glob_train = pd.Series(x_train_glob[:, -1])
+# spa_temp_var_glob_val = pd.Series(x_val_glob[:, -1])
+# spa_temp_var_glob_test = pd.Series(x_test_glob[:, -1])
+#
+# # Delete spatio temporal variable from features
+# x_train_glob = x_train_glob[:, :-1].tolist()
+# x_val_glob = x_val_glob[:, :-1].tolist()
+# x_test_glob = x_test_glob[:, :-1].tolist()
+#
+# # print("X Train shape:",pd.DataFrame(x_train_glob).shape)
+# # print("Y Train shape:",pd.DataFrame(y_train_glob).shape)
+# # print("Spatio Temporal variable Train shape:",pd.DataFrame(spa_temp_var_glob_train).shape)
+# # print("X Validation shape:",pd.DataFrame(x_val_glob).shape)
+# # print("Y Validation shape:",pd.DataFrame(y_val_glob).shape)
+# # print("Spatio Temporal variable Val shape:",pd.DataFrame(spa_temp_var_glob_val).shape)
+# # print("X Test shape:",pd.DataFrame(x_test_glob).shape)
+# # print("Y Test shape:",pd.DataFrame(y_test_glob).shape)
+# # print("Spatio Temporal variable Test shape:",pd.DataFrame(spa_temp_var_glob_test).shape)
+#
+# # Encode (as number) the labels
+# le = LabelEncoder()
+# le.fit(labels)
+# y_train_glob_num = pd.Series(le.transform(y_train_glob))
+# y_val_glob_num = pd.Series(le.transform(y_val_glob))
+# y_test_glob_num = pd.Series(le.transform(y_test_glob))
+#
+# # Encode (as number) the spatio temporal variable
+# le = LabelEncoder()
+# le.fit(spa_temp_var_glob)
+# spa_temp_var_glob_train_num = pd.Series(le.transform(spa_temp_var_glob_train))
+# spa_temp_var_glob_val_num = pd.Series(le.transform(spa_temp_var_glob_val))
+# spa_temp_var_glob_test_num = pd.Series(le.transform(spa_temp_var_glob_test))
+#
+# # Set number of local nodes
+# # num_local_nodes = local_nodes_glob
+#
+# #
+# my_plot = SplitAsFederatedData(random_state=random_state)
+# #
+# # # Dirichlet Spatio-Temporal
+# # # alphas = [0.3, 1, 6, 1000]
+# alphas = [1000, 100, 6, 3, 1.1, 1, 0.7, 0.5, 0.3, 0.1, 0.09, 0.07, 0.05, 0.03, 0.006, 0.002]
+# # alphas = [0.5]
+# for alpha_sel in alphas:
+#     clients_glob, list_ids_sampled, miss_class_per_node, distances, st_clients_glob = my_plot.create_clients(image_list=x_train_glob,
+#                                                                                         label_list=y_train_glob_num,
+#                                                                                         num_clients=30,
+#                                                                                         prefix_cli='Local_node',
+#                                                                                         method="no-label-skew",
+#                                                                                         # method="dirichlet",
+#                                                                                         # alpha=0.5,
+#                                                                                         spa_temp_skew_method="st-dirichlet",
+#                                                                                         alpha_spa_temp=alpha_sel,
+#                                                                                         spa_temp_var=spa_temp_var_glob_train_num
+#                                                                                         )
+# print(distances)
+
+
+
+
+
+######################################################################################################################
+##############################
+###### NYC_Motor_Vehicle_Collisions DATASET ######
+##############################
+from fedartml import SplitAsFederatedData
+from sklearn.model_selection import train_test_split
+from sklearn.datasets import fetch_covtype
+from sklearn.preprocessing import RobustScaler
+import pandas as pd
+import numpy as np
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import LabelEncoder
+random_state = 0
+export_curated = pd.read_csv('data/selected_curated_CL_NYC_Motor_Vehicle_Collisions.csv', sep=";")
+# Get features
+features = export_curated.iloc[:,:-2].reset_index(drop=True).values
+# Get labels
+labels = list(export_curated['Label'])
+# Get spatio temporal variable
+spa_temp_var_glob = np.array(export_curated['st_variable'])
+# Bring back the database into the features
+features = np.concatenate([features,spa_temp_var_glob.reshape(export_curated.shape[0], 1)], axis=1)
+
+# Divide data in train and an auxiliar for validation/test randomly, taking the train size as 90% of the whole data
+x_train_glob, x_test_glob, y_train_glob, y_test_glob = train_test_split(features, labels, test_size = 0.1, random_state = random_state)
+
+# Divide auxiliar data in valdiation/train randomly, taking the validation and train size as 15% (for each) of the whole data
+x_val_glob, x_test_glob, y_val_glob, y_test_glob = train_test_split(x_test_glob, y_test_glob, test_size = 0.5, random_state = random_state)
+
+# Get spatio temporal feature
+spa_temp_var_glob_train = pd.Series(x_train_glob[:, -1])
+spa_temp_var_glob_val = pd.Series(x_val_glob[:, -1])
+spa_temp_var_glob_test = pd.Series(x_test_glob[:, -1])
+
+# Delete spatio temporal variable from features
+x_train_glob = x_train_glob[:, :-1].tolist()
+x_val_glob = x_val_glob[:, :-1].tolist()
+x_test_glob = x_test_glob[:, :-1].tolist()
+
+# print("X Train shape:",pd.DataFrame(x_train_glob).shape)
+# print("Y Train shape:",pd.DataFrame(y_train_glob).shape)
+# print("Spatio Temporal variable Train shape:",pd.DataFrame(spa_temp_var_glob_train).shape)
+# print("X Validation shape:",pd.DataFrame(x_val_glob).shape)
+# print("Y Validation shape:",pd.DataFrame(y_val_glob).shape)
+# print("Spatio Temporal variable Val shape:",pd.DataFrame(spa_temp_var_glob_val).shape)
+# print("X Test shape:",pd.DataFrame(x_test_glob).shape)
+# print("Y Test shape:",pd.DataFrame(y_test_glob).shape)
+# print("Spatio Temporal variable Test shape:",pd.DataFrame(spa_temp_var_glob_test).shape)
+
+# Encode (as number) the labels
+le = LabelEncoder()
+le.fit(labels)
+y_train_glob_num = pd.Series(le.transform(y_train_glob))
+y_val_glob_num = pd.Series(le.transform(y_val_glob))
+y_test_glob_num = pd.Series(le.transform(y_test_glob))
+
+# Encode (as number) the spatio temporal variable
+le = LabelEncoder()
+le.fit(spa_temp_var_glob)
+spa_temp_var_glob_train_num = pd.Series(le.transform(spa_temp_var_glob_train))
+spa_temp_var_glob_val_num = pd.Series(le.transform(spa_temp_var_glob_val))
+spa_temp_var_glob_test_num = pd.Series(le.transform(spa_temp_var_glob_test))
+
+# Set number of local nodes
+# num_local_nodes = local_nodes_glob
+
+#
+my_plot = SplitAsFederatedData(random_state=random_state)
+#
+# # Dirichlet Spatio-Temporal
+# # alphas = [0.3, 1, 6, 1000]
+alphas = [1000, 100, 6, 3, 1.1, 1, 0.7, 0.5, 0.3, 0.1, 0.09, 0.07, 0.05, 0.03, 0.006, 0.002]
+# alphas = [0.5]
+for alpha_sel in alphas:
+    clients_glob, list_ids_sampled, miss_class_per_node, distances, st_clients_glob = my_plot.create_clients(image_list=x_train_glob,
+                                                                                        label_list=y_train_glob_num,
+                                                                                        num_clients=30,
+                                                                                        prefix_cli='Local_node',
+                                                                                        method="no-label-skew",
+                                                                                        # method="dirichlet",
+                                                                                        # alpha=0.5,
+                                                                                        spa_temp_skew_method="st-dirichlet",
+                                                                                        alpha_spa_temp=alpha_sel,
+                                                                                        spa_temp_var=spa_temp_var_glob_train_num
+                                                                                        )
+
 # Available datasets for spatio/temporal skew
 # Temporal skew image: bigearthnet https://www.tensorflow.org/datasets/catalog/bigearthnet
 # Temporal skew tabular: UNSW-NB15 https://www.kaggle.com/datasets/alextamboli/unsw-nb15
