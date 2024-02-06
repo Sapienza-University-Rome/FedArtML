@@ -756,8 +756,8 @@ my_plot = SplitAsFederatedData(random_state=random_state)
 #
 # # Dirichlet Spatio-Temporal
 # # alphas = [0.3, 1, 6, 1000]
-alphas = [1000, 100, 6, 3, 1.1, 1, 0.7, 0.5, 0.3, 0.1, 0.09, 0.07, 0.05, 0.03, 0.006, 0.002]
-# alphas = [0.5]
+# alphas = [1000, 100, 6, 3, 1.1, 1, 0.7, 0.5, 0.3, 0.1, 0.09, 0.07, 0.05, 0.03, 0.006, 0.002]
+alphas = [0.5]
 for alpha_sel in alphas:
     clients_glob, list_ids_sampled, miss_class_per_node, distances, st_clients_glob = my_plot.create_clients(image_list=x_train_glob,
                                                                                         label_list=y_train_glob_num,

@@ -675,7 +675,7 @@ class SplitAsFederatedData:
             shape_x = np.array(np.array(image_list).shape)
 
             # Select randomly some features for measuring feature skew
-            feat_sample_size = max(np.int(feat_sample_rate * np.prod(shape_x[1:])), 1)
+            feat_sample_size = max(int(feat_sample_rate * np.prod(shape_x[1:])), 1)
             np.random.seed(self.random_state)
             idx_samp_feat = np.random.choice(np.arange(np.prod(shape_x[1:])), size=feat_sample_size, replace=False)
             features = np.array(image_list).reshape((shape_x[0], np.prod(shape_x[1:])))[:, idx_samp_feat]
