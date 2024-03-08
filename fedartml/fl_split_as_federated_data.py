@@ -60,8 +60,8 @@ class SplitAsFederatedData:
 
         References
         ----------
-            .. [1] (percent_noniid) Hsieh, K., Phanishayee, A., Mutlu, O., & Gibbons, P. (2020, November). The non-iid data quagmire of decentralized machine learning. In International Conference on Machine Learning (pp. 4387-4398).PMLR.
-               https://proceedings.mlr.press/v119/hsieh20a/hsieh20a.pdf
+            .. [1] (percent_noniid) Hsieh, K., Phanishayee, A., Mutlu, O., & Gibbons, P. (2020, November). The non-iid data quagmire of decentralized machine learning. In International Conference on Machine Learning (pp. 4387-4398).PMLR. https://proceedings.mlr.press/v119/hsieh20a/hsieh20a.pdf
+
         Examples
         --------
         """
