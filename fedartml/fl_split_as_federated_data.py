@@ -532,6 +532,23 @@ class SplitAsFederatedData:
             Concentration parameter of the Dirichlet distribution defining the desired degree of non-IID-ness for the spatio-temporal skew of the federated data. Applicable only for spa_temp_skew_method="st-dirichlet".
         spa_temp_var : array-like
             The spatio-temporal variable from the centralized data. Applicable only for spa_temp_skew_method="st-dirichlet".
+        Returns
+        -------
+        fed_data : dict
+            Contains features (images) and labels for each local node (client) after federating the data. Includes "with_class_completion" and "without_class_completion" cases.
+        ids_list_fed_data : array-like
+            Indexes of examples (partition) taken for each local node (client).
+        num_missing_classes : array-like
+            Number of missing classes per each local node when creating the federated dataset
+        distances : dict
+            Distances calculated while measuring heterogeneity (non-IID-ness) of the label's distribution among clients. Includes "with_class_completion" and "without_class_completion" cases.
+        spatemp_fed_data : dict
+            Contains categories of the spatio-temporal variable for each local node (client) after federating the data. It is generated only when spa_temp_skew_method = "st-dirichlet".
+
+        Note: When creating federated data and setting heterogeneous distributions (i.e. high values of percent_noniid or small values of alpha), it is more likely the clients hold examples from only one class.
+        Then, two cases (for labels and features) are returned as output for fed_data and distances:
+            - "with_class_completion": In this case, the clients are completed with one (random) example of each missing class for each client to have all the label's classes.
+            - "without_class_completion": In this case, the clients are NOT completed with one (random) example of each missing class. Consequently, summing the number of examples of each client results in the same number of total examples (number of rows in image_list).
 
         """
         # create a list of client names
