@@ -562,6 +562,7 @@ class SplitAsFederatedData:
             .. [2] (percent_noniid) Hsieh, K., Phanishayee, A., Mutlu, O., & Gibbons, P. (2020, November). The non-iid data quagmire of decentralized machine learning. In International Conference on Machine Learning (pp. 4387-4398).PMLR.
                https://proceedings.mlr.press/v119/hsieh20a/hsieh20a.pdf
             .. [3] (gaussian noise) Li, Q., Diao, Y., Chen, Q., & He, B. (2022, May). Federated learning on non-iid data silos: An experimental study. In 2022 IEEE 38th International Conference on Data Engineering (ICDE) (pp. 965-978). IEEE.
+
         Examples
         --------
         >>> from fedartml import SplitAsFederatedData
