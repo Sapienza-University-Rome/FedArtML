@@ -490,8 +490,7 @@ class SplitAsFederatedData:
                        feat_quantile=20, quant_skew_method="no-quant-skew", alpha_quant_split=1000,
                        spa_temp_skew_method="no-spatemp-skew", alpha_spa_temp=1000, spa_temp_var=None):
         """
-        Create a federated dataset divided per each local node (client) using the desired method (percent_noniid or
-        dirichlet). It works only for classification problems (labels as classes) with quantitaive (numeric) features.
+        Create a federated dataset divided per each local node (client) using the desired method (percent_noniid or dirichlet). It works only for classification problems (labels as classes) with quantitaive (numeric) features.
 
         Parameters
         ----------
