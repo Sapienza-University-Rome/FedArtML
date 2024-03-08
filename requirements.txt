@@ -8,3 +8,4 @@ tensorflow
 scikit-learn~=1.0.2
 setuptools~=63.4.1
 recommonmark
+sphinx-rtd-theme
