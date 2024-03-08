@@ -60,7 +60,8 @@ class SplitAsFederatedData:
 
         References
         ----------
-
+            .. [1] (percent_noniid) Hsieh, K., Phanishayee, A., Mutlu, O., & Gibbons, P. (2020, November). The non-iid data quagmire of decentralized machine learning. In International Conference on Machine Learning (pp. 4387-4398).PMLR.
+               https://proceedings.mlr.press/v119/hsieh20a/hsieh20a.pdf
         Examples
         --------
         """
@@ -561,23 +562,9 @@ class SplitAsFederatedData:
             .. [2] (percent_noniid) Hsieh, K., Phanishayee, A., Mutlu, O., & Gibbons, P. (2020, November). The non-iid data quagmire of decentralized machine learning. In International Conference on Machine Learning (pp. 4387-4398).PMLR.
                https://proceedings.mlr.press/v119/hsieh20a/hsieh20a.pdf
             .. [3] (gaussian noise) Li, Q., Diao, Y., Chen, Q., & He, B. (2022, May). Federated learning on non-iid data silos: An experimental study. In 2022 IEEE 38th International Conference on Data Engineering (ICDE) (pp. 965-978). IEEE.
-
         Examples
         --------
-        >>> from fedartml import SplitAsFederatedData
-        >>> from keras.datasets import mnist
-        >>> (train_X, train_y), (test_X, test_y) = mnist.load_data()
-        >>> my_federater = SplitAsFederatedData(random_state=0)
-        >>>
-        >>> # Using percent_noniid method
-        >>> clients_glob, list_ids_sampled, miss_class_per_node, distances =
-        >>>     my_federater.create_clients(image_list=train_X, label_list=train_y, num_clients=4,
-        >>>     prefix_cli='Local_node',method="percent_noniid", percent_noniid=0)
-        >>>
-        >>> # Using dirichlet method
-        >>> clients_glob, list_ids_sampled, miss_class_per_node, distances =
-        >>>     my_federater.create_clients(image_list=train_X, label_list=train_y, num_clients=4,
-        >>>     prefix_cli='Local_node',method="dirichlet", alpha=1000)
+
         """
         # create a list of client names
         client_names = ['{}_{}'.format(prefix_cli, i + 1) for i in range(num_clients)]
