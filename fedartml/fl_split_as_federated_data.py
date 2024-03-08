@@ -489,7 +489,92 @@ class SplitAsFederatedData:
                        feat_skew_method="gaussian-noise", alpha_feat_split=1000, idx_feat='feat-mean',
                        feat_quantile=20, quant_skew_method="no-quant-skew", alpha_quant_split=1000,
                        spa_temp_skew_method="no-spatemp-skew", alpha_spa_temp=1000, spa_temp_var=None):
+        """
+        Create a federated dataset divided per each local node (client) using the desired method (percent_noniid or
+        dirichlet). It works only for classification problems (labels as classes) with quantitaive (numeric) features.
 
+        Parameters
+        ----------
+        image_list : array-like
+            List of numpy arrays (or pandas dataframe) with images (i.e. features) from the centralized data.
+        label_list : array-like
+            The target values (class labels in classification) from the centralized data.
+        num_clients : int
+            Number of local nodes (clients) used in the federated learning paradigm.
+        prefix_cli : str
+            The clients' name prefix, e.g., client_1, client_2, etc.
+        method : string
+            Method to create the federated data based on label skew. Possible options: "percent_noniid"(default), "dirichlet", "no-label-skew"
+        alpha : float
+            Concentration parameter of the Dirichlet distribution defining the desired degree of non-IID-ness for the labels of the federated data.
+        percent_noniid : float
+            Percentage (between o and 100) desired of non-IID-ness for the labels of the federated data.
+        sigma_noise : float
+            Noise (sigma parameter of Gaussian distro) to be added to the features. Applicable only for feat_skew_method="gaussian-noise".
+        bins : int or str
+            Number of bins used to create histogram of features to check feature skew. It can be the word 'n_samples' or the integer number of bins to use. If 'n_samples'(default) is selected, then it is set as the number values of the image_list (examples). Applicable only for feat_skew_method="gaussian-noise".
+        feat_sample_rate : float
+            Proportion (between 0 and 1) to be sampled from features. This parameter is useful when dealing with datasets with many features (i.e. images). Applicable only for feat_skew_method="gaussian-noise".
+        feat_skew_method : str
+            Method to create the federated data based on feature skew. Possible options: "gaussian-noise"(default), "hist-dirichlet"
+        alpha_feat_split : float
+            Concentration parameter of the Dirichlet distribution defining the desired degree of non-IID-ness for the features of the federated data. Applicable only for feat_skew_method="hist-dirichlet".
+        idx_feat : int or str
+            Position (idx) of feature used to simulate feature skew. It can be the word 'feat-mean' or the integer number of the position to use. If 'feat-mean'(default) is selected, then the mean of all the features is computed as representative of the features. Applicable only for feat_skew_method="hist-dirichlet".
+        feat_quantile : int
+            Number quantiles to use in the feature skew simulation. 20 for ventiles (default), 10 for deciles, 4 for quartiles, etc. Applicable only for feat_skew_method="hist-dirichlet".
+        quant_skew_method : str
+            Method to create the federated data based on quantity skew. Possible options: "no-quant-skew"(default), "dirichlet", "minsize-dirichlet"
+        alpha_quant_split : float
+            Concentration parameter of the Dirichlet distribution defining the desired degree of non-IID-ness for the quantity skew of the federated data. Applicable only for quant_skew_method="dirichlet".
+        spa_temp_skew_method : str
+            Method to create the federated data based on spatio-temporal skew. Possible options: "no-spatemp-skew"(default), "st-dirichlet"
+        alpha_spa_temp : float
+            Concentration parameter of the Dirichlet distribution defining the desired degree of non-IID-ness for the spatio-temporal skew of the federated data. Applicable only for spa_temp_skew_method="st-dirichlet".
+        spa_temp_var : array-like
+            The spatio-temporal variable from the centralized data. Applicable only for spa_temp_skew_method="st-dirichlet".
+        Returns
+        -------
+        fed_data : dict
+            Contains features (images) and labels for each local node (client) after federating the data. Includes "with_class_completion" and "without_class_completion" cases.
+        ids_list_fed_data : array-like
+            Indexes of examples (partition) taken for each local node (client).
+        num_missing_classes : array-like
+            Number of missing classes per each local node when creating the federated dataset
+        distances : dict
+            Distances calculated while measuring heterogeneity (non-IID-ness) of the label's distribution among clients. Includes "with_class_completion" and "without_class_completion" cases.
+        spatemp_fed_data : dict
+            Contains categories of the spatio-temporal variable for each local node (client) after federating the data. It is generated only when spa_temp_skew_method = "st-dirichlet".
+
+        Note: When creating federated data and setting heterogeneous distributions (i.e. high values of percent_noniid or small values of alpha), it is more likely the clients hold examples from only one class.
+        Then, two cases (for labels and features) are returned as output for fed_data and distances:
+            - "with_class_completion": In this case, the clients are completed with one (random) example of each missing class for each client to have all the label's classes.
+            - "without_class_completion": In this case, the clients are NOT completed with one (random) example of each missing class. Consequently, summing the number of examples of each client results in the same number of total examples (number of rows in image_list).
+
+        References
+        ----------
+            .. [1] (dirichlet) Tao Lin∗, Lingjing Kong∗, Sebastian U. Stich, Martin Jaggi. (2020). Ensemble Distillation for Robust Model Fusion in Federated Learning0
+               https://proceedings.neurips.cc/paper/2020/file/18df51b97ccd68128e994804f3eccc87-Supplemental.pdf
+            .. [2] (percent_noniid) Hsieh, K., Phanishayee, A., Mutlu, O., & Gibbons, P. (2020, November). The non-iid data quagmire of decentralized machine learning. In International Conference on Machine Learning (pp. 4387-4398).PMLR.
+               https://proceedings.mlr.press/v119/hsieh20a/hsieh20a.pdf
+            .. [3] (gaussian noise) Li, Q., Diao, Y., Chen, Q., & He, B. (2022, May). Federated learning on non-iid data silos: An experimental study. In 2022 IEEE 38th International Conference on Data Engineering (ICDE) (pp. 965-978). IEEE.
+        Examples
+        --------
+        >>> from fedartml import SplitAsFederatedData
+        >>> from keras.datasets import mnist
+        >>> (train_X, train_y), (test_X, test_y) = mnist.load_data()
+        >>> my_federater = SplitAsFederatedData(random_state=0)
+        >>>
+        >>> # Using percent_noniid method
+        >>> clients_glob, list_ids_sampled, miss_class_per_node, distances =
+        >>>     my_federater.create_clients(image_list=train_X, label_list=train_y, num_clients=4,
+        >>>     prefix_cli='Local_node',method="percent_noniid", percent_noniid=0)
+        >>>
+        >>> # Using dirichlet method
+        >>> clients_glob, list_ids_sampled, miss_class_per_node, distances =
+        >>>     my_federater.create_clients(image_list=train_X, label_list=train_y, num_clients=4,
+        >>>     prefix_cli='Local_node',method="dirichlet", alpha=1000)
+        """
         # create a list of client names
         client_names = ['{}_{}'.format(prefix_cli, i + 1) for i in range(num_clients)]
 
