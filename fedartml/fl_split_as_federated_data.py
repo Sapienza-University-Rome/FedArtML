@@ -108,6 +108,7 @@ class SplitAsFederatedData:
 
             # Get distribution of labels
             df_aux = pd.DataFrame(aux_examples_node, columns=['label']).label.value_counts().reset_index()
+            df_aux.columns = ['index', 'label']
             df_node = pd.DataFrame(np.unique(sorted_labels), columns=['index'])
             df_node = df_node.merge(df_aux, how='left', left_on='index', right_on='index').replace(np.nan, 0)
             num_per_node.append(list(df_node.label))
@@ -201,6 +202,7 @@ class SplitAsFederatedData:
             aux_examples_node = labels[idx_batch[j]]
             # Get distribution of labels
             df_aux = pd.DataFrame(aux_examples_node, columns=['label']).label.value_counts().reset_index()
+            df_aux.columns = ['index', 'label']
             df_node = pd.DataFrame(np.unique(labels), columns=['index'])
             df_node = df_node.merge(df_aux, how='left', left_on='index', right_on='index').replace(np.nan, 0)
             num_per_node.append(list(df_node.label))
@@ -371,6 +373,7 @@ class SplitAsFederatedData:
             aux_examples_node = labels[idx_batch[j]]
             # Get distribution of labels
             df_aux = pd.DataFrame(aux_examples_node, columns=['label']).label.value_counts().reset_index()
+            df_aux.columns = ['index', 'label']
             df_node = pd.DataFrame(np.unique(labels), columns=['index'])
             df_node = df_node.merge(df_aux, how='left', left_on='index', right_on='index').replace(np.nan, 0)
             num_per_node.append(list(df_node.label))
@@ -459,6 +462,7 @@ class SplitAsFederatedData:
             aux_examples_node = labels[idx_batch[j]]
             # Get distribution of labels
             df_aux = pd.DataFrame(aux_examples_node, columns=['label']).label.value_counts().reset_index()
+            df_aux.columns = ['index', 'label']
             df_node = pd.DataFrame(np.unique(labels), columns=['index'])
             df_node = df_node.merge(df_aux, how='left', left_on='index', right_on='index').replace(np.nan, 0)
             num_per_node.append(list(df_node.label))
@@ -472,6 +476,7 @@ class SplitAsFederatedData:
             aux_examples_node = st_variable[idx_batch[j]]
             # Get distribution of labels
             df_aux = pd.DataFrame(aux_examples_node, columns=['st_var']).st_var.value_counts().reset_index()
+            df_aux.columns = ['index', 'st_var']
             df_node = pd.DataFrame(np.unique(st_variable), columns=['index'])
             df_node = df_node.merge(df_aux, how='left', left_on='index', right_on='index').replace(np.nan, 0)
 
@@ -772,6 +777,7 @@ class SplitAsFederatedData:
 
                 # Get distribution of labels
                 df_aux = pd.DataFrame(y, columns=['label']).label.value_counts().reset_index()
+                df_aux.columns = ['index', 'label']
                 df_node = pd.DataFrame(np.unique(label_list), columns=['index'])
                 df_node = df_node.merge(df_aux, how='left', left_on='index', right_on='index').replace(np.nan, 0)
                 df_node['perc'] = df_node.label / sum(df_node.label)
@@ -879,6 +885,7 @@ class SplitAsFederatedData:
 
                 # Get distribution of labels
                 df_aux = pd.DataFrame(y, columns=['label']).label.value_counts().reset_index()
+                df_aux.columns = ['index', 'label']
                 df_node = pd.DataFrame(np.unique(label_list), columns=['index'])
                 df_node = df_node.merge(df_aux, how='left', left_on='index', right_on='index').replace(np.nan, 0)
                 df_node['perc'] = df_node.label / sum(df_node.label)
@@ -907,6 +914,7 @@ class SplitAsFederatedData:
 
                 # Get distribution of labels
                 df_aux = pd.DataFrame(y, columns=['label']).label.value_counts().reset_index()
+                df_aux.columns = ['index', 'label']
                 df_node = pd.DataFrame(np.unique(label_list), columns=['index'])
                 df_node = df_node.merge(df_aux, how='left', left_on='index', right_on='index').replace(np.nan, 0)
                 df_node['perc'] = df_node.label / sum(df_node.label)
@@ -916,6 +924,7 @@ class SplitAsFederatedData:
                 # Get distribution of feature
                 df_aux = pd.DataFrame(feature_selected.values[feat_distro_clients_idx[i]],
                                       columns=['feature']).feature.value_counts().reset_index()
+                df_aux.columns = ['index', 'feature']
                 df_node = pd.DataFrame(np.unique(feature_selected), columns=['index'])
                 df_node = df_node.merge(df_aux, how='left', left_on='index', right_on='index').replace(np.nan, 0)
                 df_node['perc'] = df_node.feature / sum(df_node.feature)
