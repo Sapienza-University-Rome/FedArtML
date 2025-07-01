@@ -12,9 +12,10 @@ The dataset is derived from 12-lead ECG recordings from the (Physionet 2020 comp
 
 ## 📦 File Descriptions
 
-- **all_features_all_datsets.csv**: Contains the link to the original dataset (650 features, xx, xx and xx)
-- **all_datasets_federated.csv**: Contains a reduced version of the dataset (features selected with XGBoost feature importance)
-- **name_labels_dic.pkl**: Contains the dictionary of labels (arrhythmiass) for label encoding.
+
+- **all_features_all_datsets.csv**: Contains the link to the original dataset (650 features, db_name, id, and label)
+- **all_datasets_federated.csv**: Contains a reduced version of the dataset (120 features selected with XGBoost feature importance, db_name, id, and label)
+- **name_labels_dic.pkl**: Contains the dictionary of labels (arrhythmiass) for label encoding (if needed).
 - **README.md**: This documentation.
 
 ## 📬 Citation
@@ -24,5 +25,5 @@ The dataset is derived from 12-lead ECG recordings from the (Physionet 2020 comp
   title = {12-lead Electrocardiogram (ECG) arrhythmia detection dataset},
   year = {2025},
   publisher = {GitHub},
-  url = {https://your-url.com}
+  url = {https://github.com/Sapienza-University-Rome/FedArtML/tree/master/data}
 }
