@@ -21,6 +21,7 @@ The dataset is derived from 12-lead ECG recordings from the [Physionet 2020 comp
 
 ## 📬 Citation
 
+```text
 @misc{jimenez2025ecg12lead,
   author       = {Daniel M. Jimenez-Gutierrez and Aris Anagnostopoulos and Ioannis Chatzigiannakis and Andrea Vitaletti},
   title        = {12-lead Electrocardiogram (ECG) Arrhythmia Detection Dataset},
