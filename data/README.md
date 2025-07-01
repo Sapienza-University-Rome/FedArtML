@@ -10,50 +10,19 @@ The dataset is derived from 12-lead ECG recordings from the (Physionet 2020 comp
 
 ---
 
-## 📁 Contents
-
-```text
-├── README.md            # Dataset documentation
-│   ├── test.csv         # Testing data
-│   └── labels.csv       # Ground truth labels
-│
-├── README.md            # Dataset documentation
-├── LICENSE              # License for usage
-└── metadata.json        # (Optional) Metadata about the dataset
-
-
-## 📊 Contents
-
-| Feature/Column | Description                              | Type        |
-|----------------|------------------------------------------|-------------|
-| id             | Unique identifier for each sample        | Integer     |
-| name           | Name or label of the data instance       | String      |
-| feature_1      | Description of feature_1                 | Float       |
-| feature_2      | Description of feature_2                 | Categorical |
-| ...            | ...                                      | ...         |
-
-> 📌 *Replace with your actual column names and descriptions*
-
 ## 📦 File Descriptions
 
-- **data/file1.csv**: Contains [e.g., the main dataset with features and labels].
-- **metadata/labels.csv**: [e.g., maps class IDs to human-readable labels].
-- **LICENSE**: Licensing information.
+- **all_features_all_datsets.csv**: Contains the link to the original dataset (650 features, xx, xx and xx)
+- **all_datasets_federated.csv**: Contains a reduced version of the dataset (features selected with XGBoost feature importance)
+- **name_labels_dic.pkl**: Contains the dictionary of labels (arrhythmiass) for label encoding.
 - **README.md**: This documentation.
 
-## 🔍 Usage
+## 📬 Citation
 
-To load and use the dataset in Python:
-
-```python
-import pandas as pd
-
-df = pd.read_csv('data/file1.csv')
-print(df.head())
-@misc{your_dataset_name,
+@misc{physio2020ecg12leads,
   author = {Your Name or Organization},
-  title = {Dataset Name},
+  title = {12-lead Electrocardiogram (ECG) arrhythmia detection dataset},
   year = {2025},
-  publisher = {GitHub or relevant platform},
+  publisher = {GitHub},
   url = {https://your-url.com}
 }
