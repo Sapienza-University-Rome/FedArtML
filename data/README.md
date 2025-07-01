@@ -13,10 +13,7 @@ The dataset is derived from 12-lead ECG recordings from the (Physionet 2020 comp
 ## 📁 Contents
 
 ```text
-dataset-name/
-│
-├── data/
-│   ├── train.csv        # Training data
+├── README.md            # Dataset documentation
 │   ├── test.csv         # Testing data
 │   └── labels.csv       # Ground truth labels
 │
