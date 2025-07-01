@@ -16,7 +16,7 @@ The dataset is derived from 12-lead ECG recordings from the [Physionet 2020 comp
 ## 📦 File Descriptions
 
 
-- **all_features_all_datsets.csv**: Contains the link to the complete dataset (650 features, db_name, id, and label). It has 41,894 recordings, selected from the 27 most common arrhythmias. 
+- **LINK_all_features_all_datsets.csv**: Contains the link to the complete dataset (650 features, db_name, id, and label). It has 41,894 recordings, selected from the 27 most common arrhythmias. 
 - **all_datasets_federated.csv**: Contains a reduced version of the dataset (top 120 predicting features selected with XGBoost feature importance, db_name, id, and label). It has 41,894 recordings, selected from the 27 most common arrhythmias.
 - **name_labels_dic.pkl**: Contains the dictionary of labels (arrhythmiass) for label encoding (if needed).
 - **README.md**: This documentation.
