@@ -1,7 +1,5 @@
 # 📊 12-lead Electrocardiogram (ECG) arrhythmia detection dataset
 
-_A short and descriptive title for your dataset._
-
 ---
 
 ## 📄 Description
