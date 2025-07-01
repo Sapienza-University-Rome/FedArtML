@@ -24,3 +24,39 @@ dataset-name/
 ├── LICENSE              # License for usage
 └── metadata.json        # (Optional) Metadata about the dataset
 
+
+## 📊 Contents
+
+| Feature/Column | Description                              | Type        |
+|----------------|------------------------------------------|-------------|
+| id             | Unique identifier for each sample        | Integer     |
+| name           | Name or label of the data instance       | String      |
+| feature_1      | Description of feature_1                 | Float       |
+| feature_2      | Description of feature_2                 | Categorical |
+| ...            | ...                                      | ...         |
+
+> 📌 *Replace with your actual column names and descriptions*
+
+## 📦 File Descriptions
+
+- **data/file1.csv**: Contains [e.g., the main dataset with features and labels].
+- **metadata/labels.csv**: [e.g., maps class IDs to human-readable labels].
+- **LICENSE**: Licensing information.
+- **README.md**: This documentation.
+
+## 🔍 Usage
+
+To load and use the dataset in Python:
+
+```python
+import pandas as pd
+
+df = pd.read_csv('data/file1.csv')
+print(df.head())
+@misc{your_dataset_name,
+  author = {Your Name or Organization},
+  title = {Dataset Name},
+  year = {2025},
+  publisher = {GitHub or relevant platform},
+  url = {https://your-url.com}
+}
