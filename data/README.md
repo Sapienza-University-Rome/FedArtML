@@ -16,17 +16,17 @@ The dataset is derived from 12-lead ECG recordings from the [Physionet 2020 comp
 ## 📦 File Descriptions
 
 
-- **all_features_all_datsets.csv**: Contains the link to the original dataset (650 features, db_name, id, and label)
-- **all_datasets_federated.csv**: Contains a reduced version of the dataset (top 120 predicting features selected with XGBoost feature importance, db_name, id, and label)
+- **all_features_all_datsets.csv**: Contains the link to the complete dataset (650 features, db_name, id, and label). It has 41,894 recordings, selected from the 27 most common arrhythmias. 
+- **all_datasets_federated.csv**: Contains a reduced version of the dataset (top 120 predicting features selected with XGBoost feature importance, db_name, id, and label). It has 41,894 recordings, selected from the 27 most common arrhythmias.
 - **name_labels_dic.pkl**: Contains the dictionary of labels (arrhythmiass) for label encoding (if needed).
 - **README.md**: This documentation.
 
 ## 📬 Citation
 
-@misc{physio2020ecg12leads,
-  author = {Your Name or Organization},
-  title = {12-lead Electrocardiogram (ECG) arrhythmia detection dataset},
-  year = {2025},
-  publisher = {GitHub},
-  url = {https://github.com/Sapienza-University-Rome/FedArtML/tree/master/data}
+@misc{jimenez2025ecg12lead,
+  author       = {Daniel M. Jimenez-Gutierrez and Aris Anagnostopoulos and Ioannis Chatzigiannakis and Andrea Vitaletti},
+  title        = {12-lead Electrocardiogram (ECG) Arrhythmia Detection Dataset},
+  year         = {2025},
+  publisher    = {GitHub},
+  howpublished = {\url{https://github.com/Sapienza-University-Rome/FedArtML/tree/master/data}}
 }
