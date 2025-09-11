@@ -15,7 +15,7 @@ with open(path.join(HERE, 'README.md'), encoding='utf-8') as f:
 # This call to setup() does all the work
 setup(
     name="FedArtML",
-    version="0.1.33",
+    version="0.1.34",
     description="Federated learning for Artificial Intelligence and Machine Learning library ",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -36,5 +36,5 @@ setup(
     ],
     packages=["fedartml"],
     include_package_data=True,
-    install_requires=["numpy", "ipywidgets", "matplotlib", "pandas", "scipy", "keras", "tensorflow"]
+    install_requires=["numpy", "ipywidgets", "matplotlib", "pandas", "scipy"]
 )
